@@ -1,5 +1,5 @@
 import { FRACS } from "./data";
-import type { Crime, Color, RowItem, ConcursoCrime } from "./types";
+import type { Crime, Color, RowItem, ConcursoCrime, ConcursoConfig, ConcursoModalidade } from "./types";
 
 export const FV: Record<string, number> = { "1/8":1/8,"1/6":1/6,"1/5":1/5,"1/4":1/4,"1/3":1/3,"1/2":1/2,"2/3":2/3 };
 
@@ -180,22 +180,69 @@ export function calcProgressao(
   };
 }
 
-export function calcConcurso(crimes: ConcursoCrime[]) {
+export function calcConcurso(crimes: ConcursoCrime[], config: ConcursoConfig) {
   const ativos = crimes.filter(c => {
-    const min = parseFloat(c.penaDef || c.penaMax);
-    return !isNaN(min) && min > 0;
+    const pena = parseFloat(c.penaDef);
+    return !isNaN(pena) && pena > 0;
   });
   if (ativos.length === 0) return null;
 
-  const penas = ativos.map(c => parseFloat(c.penaDef || c.penaMax) || 0);
+  const penas = ativos.map(c => parseFloat(c.penaDef) || 0);
   const maxPena = Math.max(...penas);
   const soma = penas.reduce((s, p) => s + p, 0);
   const materialUnificado = Math.min(soma, 40);
-  const formalMin = maxPena + (maxPena * 1 / 6);
-  const formalMax = maxPena + (maxPena * 1 / 2);
+  const formalFrac = parseFloat(config.aumentoFormal) || 1 / 6;
+  const continuadoFrac = parseFloat(config.aumentoContinuado) || 1 / 6;
+  const formalExasperado = maxPena * (1 + formalFrac);
+  const formalAplicavel = Math.min(formalExasperado, soma, 40);
+  const continuadoExasperado = maxPena * (1 + continuadoFrac);
+  const continuadoAplicavel = Math.min(continuadoExasperado, 40);
   const ideal = maxPena;
+  const modalidadeResultado: Record<ConcursoModalidade, number> = {
+    material: materialUnificado,
+    "formal-proprio": formalAplicavel,
+    "formal-improprio": materialUnificado,
+    continuado: continuadoAplicavel,
+  };
+  const modalidadeFundamento: Record<ConcursoModalidade, string> = {
+    material: "Art. 69, CP — duas ou mais ações ou omissões: somam-se as penas.",
+    "formal-proprio": "Art. 70, caput, 1ª parte, CP — uma ação ou omissão sem desígnios autônomos: pena mais grave aumentada.",
+    "formal-improprio": "Art. 70, caput, 2ª parte, CP — ação ou omissão com desígnios autônomos: aplica-se a soma.",
+    continuado: "Art. 71, CP — crimes da mesma espécie nas mesmas condições: pena mais grave aumentada.",
+  };
 
-  return { material: materialUnificado, formalMin, formalMax, ideal, maxPena, soma };
+  return {
+    material: materialUnificado,
+    formal: formalAplicavel,
+    formalExasperado,
+    continuado: continuadoAplicavel,
+    continuadoExasperado,
+    ideal,
+    maxPena,
+    soma,
+    penasValidas: ativos.length,
+    penasIncompletas: crimes.length - ativos.length,
+    resultadoEscolhido: modalidadeResultado[config.modalidade],
+    fundamentoEscolhido: modalidadeFundamento[config.modalidade],
+  };
+}
+
+export function sugerirModalidadeConcurso(config: ConcursoConfig): { modalidade: ConcursoModalidade; motivo: string } | null {
+  if (config.umaConduta === "sim") {
+    if (config.designiosAutonomos === "sim") {
+      return { modalidade: "formal-improprio", motivo: "Uma só conduta com desígnios autônomos aponta para concurso formal impróprio e soma das penas." };
+    }
+    if (config.designiosAutonomos === "nao") {
+      return { modalidade: "formal-proprio", motivo: "Uma só conduta sem desígnios autônomos aponta para concurso formal próprio." };
+    }
+  }
+  if (config.umaConduta === "nao" && config.mesmaEspecie === "sim" && config.mesmasCondicoes === "sim") {
+    return { modalidade: "continuado", motivo: "Várias condutas com crimes da mesma espécie e condições semelhantes apontam para continuidade delitiva." };
+  }
+  if (config.umaConduta === "nao") {
+    return { modalidade: "material", motivo: "Várias ações ou omissões sem continuidade delitiva apontam para concurso material." };
+  }
+  return null;
 }
 
 export function generateRelatorio(
@@ -240,6 +287,15 @@ export function generateRelatorio(
   lines.push("  RELATÓRIO DE DOSIMETRIA DA PENA — SISTEMA TRIFÁSICO");
   lines.push("  Art. 68, CP · Metodologia tradicional (8 vetores do Art. 59)");
   lines.push("═══════════════════════════════════════════════════════════════");
+  lines.push("");
+  lines.push("RESUMO EXECUTIVO");
+  lines.push(`  • Pena-base:        ${fmt(penBase)}`);
+  lines.push(`  • Pena intermediária:${fmt(penInter)}`);
+  lines.push(`  • Pena definitiva:  ${fmt(penDef)}`);
+  if (detAnos > 0) lines.push(`  • Após detração:    ${fmt(penRem)}`);
+  lines.push(`  • Regime indicado:  ${regime}`);
+  lines.push(`  • Substituição:     ${cabeSub ? "cabível" : subCondicional ? "condicionada" : "não cabível"}`);
+  lines.push(`  • Sursis:           ${sursis ? "cabível" : sursisEt ? "verificar etário/humanitário" : "não cabível"}`);
   lines.push("");
   lines.push("COMO FUNCIONA A DOSIMETRIA?");
   lines.push("  O sistema trifásico divide o cálculo da pena em três etapas:");
@@ -427,7 +483,9 @@ export function generateRelatorio(
   lines.push("    nos autos e discricionariedade judicial motivada.");
   lines.push("  • O juiz deve valorar QUALITATIVAMENTE as circunstâncias,");
   lines.push("    considerando a intensidade de cada vetor no caso concreto.");
-  lines.push("  • Súmulas citadas devem ser verificadas quanto à vigência.");
+  lines.push("  • Os campos deste relatório ensinam a lógica do cálculo, mas não");
+  lines.push("    substituem a fundamentação individualizada exigida na sentença.");
+  lines.push("  • Súmulas e leis especiais citadas devem ser verificadas quanto à vigência.");
   lines.push("═══════════════════════════════════════════════════════════════");
 
   return lines.join("\n");
@@ -435,13 +493,13 @@ export function generateRelatorio(
 
 export function regCorMap(regime: string): string {
   const map: Record<string, string> = {
-    Aberto: "text-green-400",
-    Semiaberto: "text-yellow-400",
-    Fechado: "text-red-400",
-    "Fechado ou Semiaberto": "text-orange-400",
-    "Semiaberto ou Fechado": "text-orange-400",
-    "Pena integralmente detraída": "text-green-400",
-    "—": "text-gray-400",
+    Aberto: "text-green-700",
+    Semiaberto: "text-amber-700",
+    Fechado: "text-red-700",
+    "Fechado ou Semiaberto": "text-orange-700",
+    "Semiaberto ou Fechado": "text-orange-700",
+    "Pena integralmente detraída": "text-green-700",
+    "—": "text-gray-500",
   };
-  return map[regime] || "text-gray-400";
+  return map[regime] || "text-gray-500";
 }

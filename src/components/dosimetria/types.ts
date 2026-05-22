@@ -37,6 +37,18 @@ export interface ConcursoCrime {
   observacao: string;
 }
 
+export type ConcursoModalidade = "material" | "formal-proprio" | "formal-improprio" | "continuado";
+
+export interface ConcursoConfig {
+  modalidade: ConcursoModalidade;
+  aumentoFormal: string;
+  aumentoContinuado: string;
+  umaConduta: string;
+  designiosAutonomos: string;
+  mesmaEspecie: string;
+  mesmasCondicoes: string;
+}
+
 export interface PrescricaoConfig {
   reducaoMetade: boolean;
   retroativa: boolean;

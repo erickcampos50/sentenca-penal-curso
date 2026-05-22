@@ -11,7 +11,7 @@ import ResultadoFinal from "./dosimetria/ResultadoFinal";
 import PrescricaoDetracao from "./dosimetria/PrescricaoDetracao";
 import ConcursoSection from "./dosimetria/ConcursoSection";
 import MultaSection from "./dosimetria/MultaSection";
-import type { Color, Crime, RowItem, PrescricaoConfig, MedidaSeguranca, MultaConfig } from "./dosimetria/types";
+import type { Color, Crime, RowItem, PrescricaoConfig, MedidaSeguranca, MultaConfig, ConcursoCrime, ConcursoConfig } from "./dosimetria/types";
 
 export default function DosimetriaPenal() {
   const [tab, setTab] = useState("calc");
@@ -47,6 +47,16 @@ export default function DosimetriaPenal() {
   const [multa, setMulta] = useState<MultaConfig>({ diasMulta: "", valorDiaMulta: "", salarioMinimo: "", fracaoSalario: "" });
   const [crimesList, setCrimesList] = useState<Crime[]>([]);
   const [crimeSelecionado, setCrimeSelecionado] = useState("");
+  const [concursoCrimes, setConcursoCrimes] = useState<ConcursoCrime[]>([]);
+  const [concursoConfig, setConcursoConfig] = useState<ConcursoConfig>({
+    modalidade: "material",
+    aumentoFormal: String(1 / 6),
+    aumentoContinuado: String(1 / 6),
+    umaConduta: "",
+    designiosAutonomos: "",
+    mesmaEspecie: "",
+    mesmasCondicoes: "",
+  });
 
   // Carregar crimes CSV
   useEffect(() => {
@@ -150,6 +160,21 @@ export default function DosimetriaPenal() {
     }
   };
 
+  const addPenaAtualAoConcurso = () => {
+    if (!hasData || penDef <= 0) return;
+    const nextId = concursoCrimes.length > 0 ? Math.max(...concursoCrimes.map(c => c.id)) + 1 : 1;
+    setConcursoCrimes(prev => [...prev, {
+      id: nextId,
+      nome: selectedCrime?.nome || crimeSelecionado || "Crime dosimetrado",
+      tipo,
+      penaMin: penMin,
+      penaMax: penMax,
+      penaDef: penDef.toFixed(4),
+      observacao: selectedCrime?.observacao || "Pena definitiva importada da aba Calculadora",
+    }]);
+    setTab("concurso");
+  };
+
   const audit = hasData ? [
     `MOLDURA: min = ${min} anos | max = ${max} anos | intervalo = ${intv.toFixed(4)} anos`,
     `INTERVALO ÷ 8 = ${(intv/8).toFixed(4)} anos por vetor negativo`,
@@ -208,17 +233,20 @@ export default function DosimetriaPenal() {
             </Info>
 
             <div className="mb-3">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Selecionar crime (auto-preenchimento)</label>
-              <select
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Selecionar crime (busca com autocomplete)</label>
+              <input
+                list="crimes-options"
                 value={crimeSelecionado}
                 onChange={e => handleCrimeChange(e.target.value)}
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400"
-              >
-                <option value="">-- Selecione um crime --</option>
+                placeholder="Digite para buscar ou escolha na lista"
+              />
+              <datalist id="crimes-options">
                 {crimesList.map((c, i) => (
                   <option key={i} value={c.nome}>{c.nome}</option>
                 ))}
-              </select>
+              </datalist>
+              <p className="mt-1 text-[11px] text-gray-500">Comece a digitar para filtrar ou abra as sugestões do navegador para listar os crimes cadastrados.</p>
               {selectedCrime?.observacao.trim() && (
                 <div className="mt-2">
                   <Info color="yellow" title="Observação do crime selecionado">
@@ -586,11 +614,24 @@ export default function DosimetriaPenal() {
             medidaSeg={medidaSeg}
             presc={presc}
           />
+          {hasData && (
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+              <h2 className="font-bold text-sm mb-1">Enviar para Concurso</h2>
+              <p className="text-xs text-gray-600 mb-3">Use a pena definitiva calculada aqui como pena individual de um dos crimes na aba Concurso.</p>
+              <button
+                type="button"
+                onClick={addPenaAtualAoConcurso}
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors"
+              >
+                Adicionar pena definitiva ao concurso
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* ========== CONCURSO ========== */}
-      {tab === "concurso" && <ConcursoSection crimesList={crimesList} />}
+      {tab === "concurso" && <ConcursoSection crimesList={crimesList} crimes={concursoCrimes} setCrimes={setConcursoCrimes} config={concursoConfig} setConfig={setConcursoConfig} />}
 
       {/* ========== REFERÊNCIAS LEGAIS ========== */}
       {tab === "refs" && (
