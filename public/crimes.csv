@@ -1,53 +1,97 @@
 nome,tipo,pena_min,pena_max,violento,observacao
-Homicídio simples (art. 121 §1º),reclusão,6,20,nao,Sem qualificadora
+Homicídio simples (art. 121 caput),reclusão,6,20,nao,Sem qualificadora
 Homicídio qualificado (art. 121 §2º),reclusão,12,30,nao,Com qualificadora
-Homicídio privilegiado (art. 121 §3º),reclusão,2,6,nao,Com atenuante
+Homicídio com privilégio (art. 121 §1º),reclusão,6,20,nao,Aplique a redução de 1/6 a 1/3 na 3ª fase
 Lesão corporal simples (art. 129),detenção,3,meses,1,ano,nao,Sem qualificadora
 Lesão corporal grave (art. 129 §1º),reclusão,1,5,nao,Conforme gravidade
-Lesão corporal gravíssima (art. 129 §2º),reclusão,2,10,nao,Conforme gravidade
-Furto simples (art. 155),reclusão,1,4,nao,Sem qualificadora
+Lesão corporal gravíssima (art. 129 §2º),reclusão,2,8,nao,Conforme gravidade
+Furto simples (art. 155),reclusão,1,6,nao,Sem qualificadora
 Furto qualificado (art. 155 §4º),reclusão,2,8,nao,Com qualificadora
-Furto noturno (art. 155 §1º),reclusão,1,5,nao,Circunstância do lugar
-Roubo simples (art. 157),reclusão,4,10,sim,Sem qualificadora
-Roubo majorado (art. 157 §2º-A),reclusão,10,20,sim,Com resultado morte/lesão grave
-Latrocínio (art. 157 §3º),reclusão,20,30,sim,Roubo com resultado morte
+Furto noturno (art. 155 §1º),reclusão,1,6,nao,Aplique aumento de metade na 3ª fase
+Roubo simples (art. 157),reclusão,6,10,sim,Sem majorante
+Roubo majorado (art. 157 §2º-A),reclusão,6,10,sim,Aplique aumento de 2/3 na 3ª fase
+Latrocínio (art. 157 §3º II),reclusão,24,30,sim,Roubo com resultado morte
 Estupro (art. 213),reclusão,6,10,sim,
 Estupro de vulnerável (art. 217-A),reclusão,8,15,sim,
 Ameaça (art. 147),detenção,1,meses,6,meses,nao,
-Constrangimento ilegal (art. 146),detenção,1,meses,6,meses,nao,
+Constrangimento ilegal (art. 146),detenção,3,meses,1,ano,nao,
 Sequestro/cárcere privado (art. 148),reclusão,1,3,nao,Sem qualificadora
 Extorsão (art. 158),reclusão,4,10,nao,
-Extorsão mediante sequestro (art. 159),reclusão,12,20,nao,
+Extorsão mediante sequestro (art. 159),reclusão,8,15,nao,
 Dano simples (art. 163),detenção,1,meses,6,meses,nao,
-Dano qualificado (art. 163 §1º),reclusão,1,3,nao,
-Receptação simples (art. 180),detenção,1,4,nao,
-Receptação qualificada (art. 180 §1º),reclusão,1,4,nao,Concurso de agentes
+Dano qualificado (art. 163 parágrafo único),detenção,6,meses,3,anos,nao,
+Receptação simples (art. 180),reclusão,2,6,nao,
+Receptação qualificada (art. 180 §1º),reclusão,3,8,nao,Exercício de atividade comercial ou industrial
 Apropriação indébita (art. 168),reclusão,1,4,nao,
 Injúria (art. 140),detenção,1,meses,6,meses,nao,
-Difamação (art. 139),detenção,3,meses,6,meses,nao,
+Difamação (art. 139),detenção,3,meses,1,ano,nao,
 Calúnia (art. 138),detenção,6,meses,2,anos,nao,
 Falso testemunho (art. 342),reclusão,2,4,nao,
-Desacordo (art. 331),detenção,6,meses,2,anos,nao,
-Resistência (art. 329),detenção,2,meses,1,ano,nao,
+Desacato (art. 331),detenção,6,meses,2,anos,nao,
+Resistência (art. 329),detenção,2,meses,2,anos,nao,
 Desobediência (art. 330),detenção,15,dias,2,meses,nao,
 Crimes contra a Administração Pública — Peculato (art. 312),reclusão,2,12,nao,
-Crimes contra a Administração Pública — Concussão (art. 316),reclusão,4,12,nao,
+Crimes contra a Administração Pública — Concussão (art. 316),reclusão,2,12,nao,
 Crimes contra a Administração Pública — Corrupção ativa (art. 333),reclusão,2,12,nao,
 Crimes contra a Administração Pública — Corrupção passiva (art. 317),reclusão,2,12,nao,
-Crimes contra a Administração Pública — Prevaricação (art. 319),detenção,1,meses,6,meses,nao,
-Crimes contra a Administração Pública — Extravio (art. 313),detenção,6,meses,3,anos,nao,
+Crimes contra a Administração Pública — Prevaricação (art. 319),detenção,3,meses,1,ano,nao,
+Crimes contra a Administração Pública — Extravio sonegação ou inutilização (art. 314),reclusão,1,4,nao,
 Tráfico de drogas (art. 33 Lei 11.343/06),reclusão,5,15,nao,Sem qualificadora
-Tráfico privilegiado (art. 33 §4º Lei 11.343/06),reclusão,1,4,nao,Cooperar de forma efetiva
+Tráfico com causa de diminuição (art. 33 §4º Lei 11.343/06),reclusão,5,15,nao,Aplique redução de 1/6 a 2/3 na 3ª fase
 Associação para o tráfico (art. 35 Lei 11.343/06),reclusão,3,10,nao,
-Porte de drogas para uso próprio (art. 28 Lei 11.343/06),detenção,3,meses,1,ano,nao,Reduzir a medida educativa
-Corrupção de menores (art. 244-A ECA),reclusão,2,6,nao,
+Maquinário para drogas (art. 34 Lei 11.343/06),reclusão,3,10,nao,
+Financiamento do tráfico (art. 36 Lei 11.343/06),reclusão,8,20,nao,
+Colaboração como informante do tráfico (art. 37 Lei 11.343/06),reclusão,2,6,nao,
+Prescrição culposa de drogas (art. 38 Lei 11.343/06),detenção,6,meses,2,anos,nao,
+Exploração sexual de criança ou adolescente (art. 244-A ECA),reclusão,4,10,sim,
+Corrupção de menores (art. 244-B ECA),reclusão,1,4,nao,
 Tráfico de pessoas (art. 149-A),reclusão,4,8,nao,
-Homicídio culposo (art. 121 §3º),reclusão,1,3,nao,Culposo
+Homicídio culposo (art. 121 §3º),detenção,1,3,nao,Culposo
 Lesão corporal culposa (art. 129 §6º),detenção,2,meses,1,ano,nao,Culposo
-Abandono de incapaz (art. 133),reclusão,1,4,nao,
-Maus-tratos (art. 136),reclusão,2,4,nao,
-Bigamia (art. 235),detenção,6,meses,2,anos,nao,
-Adultério (art. 238),detenção,15,dias,1,ano,nao,
+Abandono de incapaz (art. 133),reclusão,2,5,nao,
+Maus-tratos (art. 136),reclusão,2,5,nao,
+Bigamia (art. 235),reclusão,2,6,nao,
+Simulação de autoridade para casamento (art. 238),detenção,1,3,nao,
 Crimes hediondos — Tortura (art. 1º Lei 9.455/97),reclusão,2,8,nao,
 Crimes hediondos — Terrorismo (art. 2º Lei 13.260/16),reclusão,12,30,nao,
 Crimes hediondos — Racismo (art. 140 §3º),reclusão,2,5,nao,
+Posse irregular de arma de uso permitido (art. 12 Lei 10.826/03),detenção,1,3,nao,
+Omissão de cautela com arma de fogo (art. 13 Lei 10.826/03),detenção,1,2,nao,
+Porte ilegal de arma de uso permitido (art. 14 Lei 10.826/03),reclusão,2,4,nao,
+Disparo de arma de fogo (art. 15 Lei 10.826/03),reclusão,2,4,nao,
+Posse ou porte de arma de uso restrito (art. 16 Lei 10.826/03),reclusão,3,6,nao,
+Posse ou porte de arma de uso proibido (art. 16 §2º Lei 10.826/03),reclusão,4,12,nao,
+Comércio ilegal de arma de fogo (art. 17 Lei 10.826/03),reclusão,6,12,nao,
+Tráfico internacional de arma de fogo (art. 18 Lei 10.826/03),reclusão,8,16,nao,
+Maus-tratos a cão ou gato (art. 32 §1º-A Lei 9.605/98),reclusão,2,5,nao,
+Pesca com explosivos ou substância tóxica (art. 35 Lei 9.605/98),reclusão,1,5,nao,
+Dano a unidade de conservação (art. 40 Lei 9.605/98),reclusão,1,5,nao,
+Incêndio em floresta ou vegetação (art. 41 Lei 9.605/98),reclusão,2,4,nao,
+Desmatamento em terra pública (art. 50-A Lei 9.605/98),reclusão,2,4,nao,
+Poluição ambiental (art. 54 Lei 9.605/98),reclusão,1,4,nao,
+Poluição ambiental qualificada (art. 54 §2º Lei 9.605/98),reclusão,1,5,nao,
+Produto ou substância perigosa irregular (art. 56 Lei 9.605/98),reclusão,1,4,nao,
+Relatório ambiental falso (art. 69-A Lei 9.605/98),reclusão,3,6,nao,
+Subtração de criança para lar substituto (art. 237 ECA),reclusão,2,6,nao,
+Entrega de filho mediante paga (art. 238 ECA),reclusão,1,4,nao,
+Envio irregular de criança ao exterior (art. 239 ECA),reclusão,4,6,nao,
+Produção de cena sexual infantil (art. 240 ECA),reclusão,4,8,sim,
+Venda de cena sexual infantil (art. 241 ECA),reclusão,4,8,sim,
+Compartilhamento de cena sexual infantil (art. 241-A ECA),reclusão,3,6,sim,
+Posse de cena sexual infantil (art. 241-B ECA),reclusão,1,4,nao,
+Simulação de cena sexual infantil (art. 241-C ECA),reclusão,1,3,sim,
+Aliciamento sexual de criança (art. 241-D ECA),reclusão,1,3,sim,
+Homicídio culposo no trânsito (art. 302 CTB),detenção,2,4,nao,
+Homicídio culposo no trânsito qualificado (art. 302 §3º CTB),reclusão,5,8,nao,
+Lesão corporal culposa no trânsito (art. 303 CTB),detenção,6,meses,2,anos,nao,
+Lesão corporal culposa no trânsito qualificada (art. 303 §2º CTB),reclusão,2,5,nao,
+Omissão de socorro no trânsito (art. 304 CTB),detenção,6,meses,1,ano,nao,
+Fuga do local do acidente (art. 305 CTB),detenção,6,meses,1,ano,nao,
+Embriaguez ao volante (art. 306 CTB),detenção,6,meses,3,anos,nao,
+Participação em corrida não autorizada (art. 308 CTB),detenção,6,meses,3,anos,nao,
+Corrida não autorizada com lesão grave (art. 308 §1º CTB),reclusão,3,6,sim,
+Corrida não autorizada com morte (art. 308 §2º CTB),reclusão,5,10,sim,
+Direção sem habilitação com perigo (art. 309 CTB),detenção,6,meses,1,ano,nao,
+Entrega de direção a pessoa não habilitada (art. 310 CTB),detenção,6,meses,1,ano,nao,
+Velocidade incompatível gerando perigo (art. 311 CTB),detenção,6,meses,1,ano,nao,
+Fraude processual em acidente de trânsito (art. 312 CTB),detenção,6,meses,1,ano,nao,
