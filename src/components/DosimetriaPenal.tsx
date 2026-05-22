@@ -92,6 +92,36 @@ const SUMULAS = [
     text: "É possível a compensação integral da atenuante da confissão espontânea com a agravante da reincidência, seja ela específica ou não. Nos casos de multirreincidência, deve ser reconhecida a preponderância da reincidência." },
   { id: "Súmula 497/STF", fase: "Prescrição", cor: "blue",
     text: "Quando se tratar de crime continuado, a prescrição regula-se pela pena imposta na sentença, não se computando o acréscimo decorrente da continuação." },
+  // Súmulas STJ adicionais
+  { id: "Súmula 438/STJ", fase: "Regime", cor: "green",
+    text: "O regime prisional semiaberto pode ser substituído pelo aberto, ainda que não preenchidos os requisitos legais, quando o apenado não tiver cometido crime doloso, não for reincidente em crime doloso e tiver cumprido 1/6 da pena." },
+  { id: "Súmula 439/STJ", fase: "Regime", cor: "green",
+    text: "A progressão de regime prisional exige o cumprimento de 1/6 da pena, salvo reincidente em crime doloso, para quem o percentual é de 1/4." },
+  { id: "Súmula 442/STJ", fase: "2ª fase", cor: "yellow",
+    text: "A fração de aumento ou diminuição de pena não fixada em lei deve ser fixada pelo juiz, observados os critérios do art. 68 do CP." },
+  { id: "Súmula 443/STJ", fase: "1ª/2ª fase", cor: "yellow",
+    text: "A majorante da reincidência não se confunde com a circunstância judicial do art. 59, I, do CP." },
+  { id: "Súmula 520/STJ", fase: "Regime", cor: "green",
+    text: "A progressão de regime prisional independe de requerimento do condenado." },
+  // Súmulas/teses STF adicionais
+  { id: "SV 59/STF", fase: "Dosimetria/Regime", cor: "blue",
+    text: "É impositiva a fixação do regime aberto e a substituição da pena por restritivas quando reconhecido tráfico privilegiado e ausentes vetores negativos na 1ª fase." },
+  { id: "SV 56/STF", fase: "Regime", cor: "green",
+    text: "A falta de estabelecimento penal adequado não autoriza a manutenção do condenado em regime prisional mais gravoso, devendo-se observar os parâmetros fixados no RE 641.320/RS." },
+  { id: "SV 26/STF", fase: "Regime", cor: "green",
+    text: "Para progressão em crime hediondo, observar inconstitucionalidade do art. 2º da Lei 8.072/1990, sem prejuízo de avaliar requisitos objetivos e subjetivos do benefício." },
+  { id: "Súmula 716/STF", fase: "Regime", cor: "green",
+    text: "Admite-se progressão de regime antes do trânsito em julgado da sentença condenatória." },
+  { id: "Súmula 715/STF", fase: "Execução", cor: "blue",
+    text: "A pena unificada para atender ao limite de 30 anos não é considerada para concessão de outros benefícios, como livramento condicional ou regime mais favorável." },
+  { id: "Súmula 723/STF", fase: "Sursis", cor: "yellow",
+    text: "Não se admite sursis por crime continuado se a soma da pena mínima da infração mais grave com o aumento mínimo de um sexto for superior a um ano." },
+  { id: "Súmula 499/STF", fase: "Sursis", cor: "yellow",
+    text: "Não obsta à concessão do sursis condenação anterior à pena de multa." },
+  { id: "Súmula 711/STF", fase: "Dosimetria", cor: "blue",
+    text: "A lei penal mais grave aplica-se ao crime continuado se sua vigência é anterior à cessação da continuidade." },
+  { id: "Súmula 604/STF", fase: "Prescrição", cor: "blue",
+    text: "A prescrição pela pena em concreto é somente da pretensão executória da pena privativa de liberdade." },
 ];
 
 const PRESCRICAO = [
@@ -186,6 +216,10 @@ export default function DosimetriaPenal() {
   const [majors, setMajors] = useState<RowItem[]>([]);
   const [minors, setMinors] = useState<RowItem[]>([]);
   const [detMeses, setDetMeses] = useState("");
+  const [tentativa, setTentativa] = useState(false);
+  const [tentativaFrac, setTentativaFrac] = useState("1/2");
+  const [hediondo, setHediondo] = useState(false);
+  const [reincEspec, setReincEspec] = useState(false);
   const [openV, setOpenV] = useState<number | null>(null);
 
   // Validação de inputs numéricos
@@ -216,12 +250,16 @@ export default function DosimetriaPenal() {
   atAtivos.forEach(a => { atSum += penBase * FV[a.frac]; });
   const penInter = hasData ? Math.min(Math.max(penBase + agSum - atSum, min), max) : 0;
 
-  // Fase 3 — com validação de frações
+  // Fase 3 — com validação de frações e tentativa (Art. 14, CP)
   let penDef = penInter;
   const minAtivos = minors.filter(m => m.desc?.trim() && m.frac in FV);
   const majAtivos = majors.filter(m => m.desc?.trim() && m.frac in FV);
   minAtivos.forEach(m => { penDef = penDef * (1 - FV[m.frac]); });
   majAtivos.forEach(m => { penDef = penDef * (1 + FV[m.frac]); });
+  // Aplicação da tentativa como minorante automático
+  if (tentativa && penDef > 0 && tentativaFrac in FV) {
+    penDef = penDef * (1 - FV[tentativaFrac]);
+  }
   penDef = Math.max(penDef, 0);
 
   // Detração — com validação de não-negatividade
@@ -229,10 +267,13 @@ export default function DosimetriaPenal() {
   const detAnos = !isNaN(detMesesNum) && detMesesNum >= 0 ? detMesesNum / 12 : 0;
   const penRem = Math.max(penDef - detAnos, 0);
 
-  // Regime — com tratamento de prisão simples (Art. 34, CP)
+  // Regime — com hediondo (Lei 13.964/2019), prisão simples (Art. 34) e reincidente específico
   let regime: string = "—", regiF = "";
   if (hasData) {
-    if (tipoNorm === "prisão simples") {
+    if (hediondo) {
+      regime = "Fechado";
+      regiF = "Art. 33, § 1º-A, Lei 13.964/2019 — crime hediondo com resultado morte/lesão grave: regime fechado obrigatório.";
+    } else if (tipoNorm === "prisão simples") {
       regime = "Aberto";
       regiF = "Art. 34, CP — prisão simples admite apenas regime aberto.";
     } else if (tipoNorm === "detenção") {
@@ -246,10 +287,16 @@ export default function DosimetriaPenal() {
         ? "Art. 33, § 2º, b c/c § 3º. Reincidente pode ter regime agravado. Súm. 269/STJ: semiaberto cabível se favoráveis as circunstâncias."
         : "Art. 33, § 2º, b — pena 4–8 anos, réu primário → semiaberto.";
     } else {
-      regime = reincNorm ? "Semiaberto" : "Aberto";
-      regiF = reincNorm
-        ? "Art. 33, § 2º, c c/c § 3º — reincidente não inicia em aberto. Súm. 269/STJ: semiaberto se favoráveis as circunstâncias judiciais."
-        : "Art. 33, § 2º, c — pena ≤ 4 anos, réu primário → aberto.";
+      // Pena ≤ 4 anos: reincidente específico → regime fixado pelo juiz (Lei 13.964/2019)
+      if (reincNorm && reincEspec) {
+        regime = "Fechado ou Semiaberto";
+        regiF = "Art. 33, § 3º c/c Lei 13.964/2019 — reincidente específico em crime doloso: regime fixado pelo juiz (fechado ou semiaberto).";
+      } else {
+        regime = reincNorm ? "Semiaberto" : "Aberto";
+        regiF = reincNorm
+          ? "Art. 33, § 2º, c c/c § 3º — reincidente não inicia em aberto. Súm. 269/STJ: semiaberto se favoráveis as circunstâncias judiciais."
+          : "Art. 33, § 2º, c — pena ≤ 4 anos, réu primário → aberto.";
+      }
     }
   }
 
@@ -316,6 +363,9 @@ export default function DosimetriaPenal() {
       {/* ========== CALCULADORA ========== */}
       {tab === "calc" && (
         <div className="space-y-4">
+          <Info color="gray">
+            <strong>Convenção de cálculo:</strong> 1 ano = 360 dias (ano comercial) · 1 mês = 30 dias. As conversões para anos/meses/dias seguem a prática forense e podem divergir do calendário civil em cerca de 5 dias por ano.
+          </Info>
 
           {/* Moldura */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
@@ -357,6 +407,39 @@ export default function DosimetriaPenal() {
                 <option value="sim">Sim</option>
               </select>
             </div>
+            <div className="mt-3 space-y-2">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={tentativa} onChange={e => setTentativa(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Crime tentado (art. 14, II, CP)</span>
+              </label>
+              {tentativa && (
+                <div className="ml-5">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Redução da pena (quanto mais próximo da consumação, menor a redução)</label>
+                  <select value={tentativaFrac} onChange={e => setTentativaFrac(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:border-blue-400">
+                    <option value="1/2">1/2 — iter criminis muito distante da consumação</option>
+                    <option value="1/3">1/3 — iter criminis intermediário</option>
+                    <option value="1/6">1/6 — iter criminis muito próximo da consumação</option>
+                  </select>
+                </div>
+              )}
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={hediondo} onChange={e => setHediondo(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Crime hediondo com resultado morte ou lesão grave (Lei 13.964/2019)</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={reincEspec} onChange={e => setReincEspec(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Reincidente específico em crime doloso (Art. 33, § 3º c/c Lei 13.964/2019)</span>
+              </label>
+            </div>
+            {!isValidMax && penMax && (
+              <div className="mt-2 bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700">
+                ⚠️ A pena máxima deve ser maior ou igual à pena mínima.
+              </div>
+            )}
             {hasData && (
               <div className="mt-3 bg-gray-50 rounded p-2 text-xs text-gray-600 border">
                 Intervalo: <strong>{fmt(intv)}</strong> · Cada vetor negativo acresce: <strong>{fmt(intv/8)}</strong> (intervalo ÷ 8)
@@ -771,17 +854,21 @@ export default function DosimetriaPenal() {
                 <div className="bg-gray-50 rounded p-3 font-mono text-xs text-gray-700 space-y-1.5">
                   <p><strong>1ª fase (pena-base):</strong> min + (N_neg × intervalo ÷ 8)</p>
                   <p><strong>Agravante:</strong> penBase × fração</p>
-                  <p><strong>Atenuante:</strong> penBase × fração → resultado ≥ mínimo legal (Súm. 231/STJ)</p>
-                  <p><strong>2ª fase (pena intermediária):</strong> penBase + Σagravantes − Σatenuantes</p>
+                  <p><strong>Atenuante:</strong> penBase × fração → resultado ≥ mínimo e ≤ máximo legal (Súm. 231/STJ; Art. 68, § 2º, CP)</p>
+                  <p><strong>2ª fase (pena intermediária):</strong> penBase + Σagravantes − Σatenuantes → limitada ao intervalo legal</p>
                   <p><strong>Minorante:</strong> penAnterior × (1 − fração)</p>
                   <p><strong>Majorante:</strong> penAnterior × (1 + fração)</p>
                   <p><strong>3ª fase (pena definitiva):</strong> após todas as causas (pode sair da moldura)</p>
+                  <p><strong>Tentativa (art. 14, II):</strong> minorante automática conforme iter criminis</p>
                   <p><strong>Detração:</strong> penDef − (meses ÷ 12)</p>
-                  <p><strong>Prescrição abstrata:</strong> tabela art. 109 sobre pena máxima em abstrato</p>
-                  <p><strong>Prescrição concreta/retroativa:</strong> tabela art. 109 sobre pena definitiva</p>
+                  <p><strong>Prescrição abstrata:</strong> tabela art. 109 sobre pena máxima do tipo penal (usada a moldura inserida)</p>
+                  <p><strong>Prescrição concreta:</strong> tabela art. 109 sobre pena definitiva aplicada</p>
                 </div>
                 <div className="mt-3 bg-blue-50 rounded p-2 text-xs text-blue-800">
-                  <p><strong>Convenções:</strong> 1 ano = 12 meses = 360 dias · Fração STJ (2ª fase): 1/6 padrão · Frações em anos decimais para precisão</p>
+                  <p><strong>Convenções:</strong> 1 ano = 12 meses = 360 dias (ano comercial) · Fração STJ (2ª fase): 1/6 padrão · Frações em anos decimais para precisão</p>
+                </div>
+                <div className="mt-2 bg-yellow-50 rounded p-2 text-xs text-yellow-800">
+                  <p><strong>Nota sobre prescrição:</strong> O cálculo da prescrição abstrata usa a "pena máxima" inserida acima. Se a moldura penal aplicável ao caso concreto (ex: por causa de diminuição/majorante da Parte Especial) for diferente da pena máxima do tipo penal em abstrato, ajuste o campo "Pena máxima" para refletir a pena máxima do tipo penal para o cálculo prescricional correto (Art. 109, CP).</p>
                 </div>
               </div>
             </>
