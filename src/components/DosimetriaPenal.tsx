@@ -1,206 +1,17 @@
-import { useState, type ReactNode } from "react";
-
-const VETORES = [
-  { name: "Culpabilidade", art: "Art. 59, CP",
-    desc: "Grau de reprovabilidade da conduta. Avalia a intensidade do dolo, a consciência da ilicitude e o nível de exigibilidade de conduta diversa. Não se confunde com culpabilidade como elemento do crime.",
-    desfavoravel: "Dolo direto de elevada intensidade, premeditação acentuada, persistência na conduta ilícita, alta exigibilidade de conduta diversa.",
-    alerta: "Não confundir com reincidência (2ª fase) nem com circunstâncias do crime. Elementos já usados como qualificadora não podem fundamentar este vetor." },
-  { name: "Antecedentes", art: "Art. 59, CP",
-    desc: "Vida pregressa criminal do réu. Considera condenações transitadas em julgado que não configurem reincidência (fora do período depurador de 5 anos — art. 64, I, CP).",
-    desfavoravel: "Condenações anteriores transitadas em julgado que não gerem reincidência (período depurador expirado). Folha de antecedentes é suficiente (Súmula 636/STJ).",
-    alerta: "Súmula 444/STJ: vedado uso de inquéritos e ações sem trânsito em julgado. Súmula 241/STJ: reincidência não pode ser agravante e circunstância judicial simultaneamente." },
-  { name: "Conduta Social", art: "Art. 59, CP",
-    desc: "Comportamento do réu no trabalho, família e comunidade. Avalia sua inserção social, relações familiares e vida profissional.",
-    desfavoravel: "Histórico de condutas antissociais comprovadas nos autos, conflitos familiares graves, comportamento comunitário nocivo.",
-    alerta: "Exige prova concreta. Meras suposições, estigmas sociais ou ausência de prova não fundamentam vetor negativo. Risco de estereotipagem." },
-  { name: "Personalidade", art: "Art. 59, CP",
-    desc: "Traços de caráter e temperamento revelados pelo comportamento: agressividade, impulsividade, frieza, calculismo.",
-    desfavoravel: "Personalidade voltada ao crime, frieza durante execução, crueldade, calculismo extremo evidenciado nos autos.",
-    alerta: "Vetor muito criticado doutrinariamente (direito penal do autor). Exige fundamento concreto. Alto risco de bis in idem com culpabilidade e circunstâncias do crime." },
-  { name: "Motivos", art: "Art. 59, CP",
-    desc: "Razão determinante da prática criminosa. Motivo torpe ou fútil agrava; motivo nobre pode favorecer; razão egoística neutra.",
-    desfavoravel: "Motivo torpe, fútil, ganância excessiva, vingança desproporcional, discriminação.",
-    alerta: "Verificar se o motivo já é elementar do tipo ou qualificadora (ex: motivo fútil no homicídio qualificado). Neste caso, vetor neutro — bis in idem." },
-  { name: "Circunstâncias do Crime", art: "Art. 59, CP",
-    desc: "Modo, lugar, tempo, instrumentos e demais aspectos que cercam o fato. Caráter residual — tudo que não se enquadra nas demais.",
-    desfavoravel: "Modus operandi especialmente gravoso, local estratégico para dificultar socorro, tempo escolhido para facilitar impunidade.",
-    alerta: "Não usar fatos que já fundamentam qualificadoras, majorantes ou outras circunstâncias judiciais. Bis in idem é o erro mais frequente neste vetor." },
-  { name: "Consequências do Crime", art: "Art. 59, CP",
-    desc: "Resultados concretos do crime além dos elementos do tipo penal. Dano moral, patrimonial, social acima do normal do delito.",
-    desfavoravel: "Dano excepcionalmente elevado, sequelas permanentes, impacto social amplo, número elevado de vítimas.",
-    alerta: "Consequências inerentes ao tipo não podem ser usadas (ex: morte no homicídio, subtração no furto). Apenas o que extrapola o resultado típico normal." },
-  { name: "Comportamento da Vítima", art: "Art. 59, CP",
-    desc: "Contribuição da vítima para o crime. Tipicamente favorável ao réu (quando houve provocação) ou neutro.",
-    desfavoravel: "Raramente desfavorável ao réu. Vetor quase sempre neutro ou favorável.",
-    alerta: "Se a vítima contribuiu para o crime, este vetor é FAVORÁVEL ao réu. Não usar negativamente sem fundamento sólido — seria punir o acusado pelo comportamento alheio." },
-];
-
-const AGRAVANTES_LIST = [
-  { code: "Art. 61, I", desc: "Reincidência" },
-  { code: "Art. 61, II, a", desc: "Motivo torpe" },
-  { code: "Art. 61, II, b", desc: "Motivo fútil" },
-  { code: "Art. 61, II, c", desc: "Facilitar ou assegurar execução, ocultação ou impunidade de outro crime" },
-  { code: "Art. 61, II, d", desc: "Traição, emboscada, dissimulação ou recurso que dificultou a defesa" },
-  { code: "Art. 61, II, e", desc: "Emprego de veneno, fogo, explosivo, tortura ou meio cruel" },
-  { code: "Art. 61, II, f", desc: "Contra ascendente, descendente, irmão ou cônjuge" },
-  { code: "Art. 61, II, g", desc: "Abuso de autoridade, relação doméstica, coabitação ou hospitalidade" },
-  { code: "Art. 61, II, h", desc: "Abuso de poder ou violação de dever de cargo, ofício, ministério ou profissão" },
-  { code: "Art. 61, II, i", desc: "Contra criança, maior de 60 anos, enfermo ou mulher grávida" },
-  { code: "Art. 61, II, j", desc: "Quando o ofendido estava sob proteção imediata da autoridade" },
-  { code: "Art. 61, II, l", desc: "Em ocasião de incêndio, naufrágio, inundação ou calamidade pública" },
-  { code: "Art. 61, II, m", desc: "Em estado de embriaguez preordenada" },
-  { code: "Art. 62, I", desc: "Promoveu ou organizou a cooperação no crime" },
-  { code: "Art. 62, II", desc: "Coagiu ou induziu outrem à prática do crime" },
-  { code: "Art. 62, III", desc: "Instigou ou determinou a cometer o crime" },
-  { code: "Art. 62, IV", desc: "Executou mediante paga ou promessa de recompensa" },
-];
-
-const ATENUANTES_LIST = [
-  { code: "Art. 65, I", desc: "Menor de 21 anos na data do fato" },
-  { code: "Art. 65, I", desc: "Maior de 70 anos na data da sentença" },
-  { code: "Art. 65, II", desc: "Desconhecimento da lei" },
-  { code: "Art. 65, III, a", desc: "Motivo de relevante valor social ou moral" },
-  { code: "Art. 65, III, b", desc: "Arrependimento eficaz ou arrependimento posterior" },
-  { code: "Art. 65, III, c", desc: "Coação resistível ou cumprimento de ordem de superior hierárquico" },
-  { code: "Art. 65, III, d", desc: "Confissão espontânea da autoria (Súmula 545/STJ)" },
-  { code: "Art. 65, III, e", desc: "Influência de multidão em tumulto" },
-  { code: "Art. 66", desc: "Circunstância relevante anterior ou posterior ao crime (inominada)" },
-];
-
-const SUMULAS = [
-  { id: "Súmula 231/STJ", fase: "2ª fase", cor: "yellow",
-    text: "A incidência da circunstância atenuante não pode conduzir à redução da pena abaixo do mínimo legal." },
-  { id: "Súmula 241/STJ", fase: "1ª/2ª fase", cor: "yellow",
-    text: "A reincidência penal não pode ser considerada como circunstância agravante e, simultaneamente, como circunstância judicial." },
-  { id: "Súmula 269/STJ", fase: "Regime", cor: "green",
-    text: "É admissível a adoção do regime prisional semi-aberto aos reincidentes condenados a pena igual ou inferior a quatro anos se favoráveis as circunstâncias judiciais." },
-  { id: "Súmula 440/STJ", fase: "Regime", cor: "green",
-    text: "Fixada a pena-base no mínimo legal, é vedado o estabelecimento de regime prisional mais gravoso do que o cabível em razão da sanção imposta, com base apenas na gravidade abstrata do delito." },
-  { id: "Súmula 444/STJ", fase: "1ª fase", cor: "red",
-    text: "É vedada a utilização de inquéritos policiais e ações penais em curso para agravar a pena-base." },
-  { id: "Súmula 545/STJ", fase: "2ª fase", cor: "yellow",
-    text: "Quando a confissão for utilizada para a formação do convencimento do julgador, o réu fará jus à atenuante prevista no art. 65, III, d, do CP." },
-  { id: "Súmula 630/STJ", fase: "2ª fase", cor: "yellow",
-    text: "A incidência da atenuante da confissão espontânea no crime de tráfico ilícito de entorpecentes exige o reconhecimento da traficância pelo acusado, não bastando a mera admissão da posse para uso próprio." },
-  { id: "Súmula 636/STJ", fase: "1ª fase", cor: "red",
-    text: "A folha de antecedentes criminais é documento suficiente a comprovar os maus antecedentes e a reincidência." },
-  { id: "Súmula 718/STF", fase: "Regime", cor: "green",
-    text: "A opinião do julgador sobre a gravidade em abstrato do crime não constitui motivação idônea para a imposição de regime mais severo do que o permitido segundo a pena aplicada." },
-  { id: "Súmula 719/STF", fase: "Regime", cor: "green",
-    text: "A imposição do regime de cumprimento mais severo do que a pena aplicada permitir exige motivação idônea." },
-  { id: "Tema 585/STJ", fase: "2ª fase", cor: "yellow",
-    text: "É possível a compensação integral da atenuante da confissão espontânea com a agravante da reincidência, seja ela específica ou não. Nos casos de multirreincidência, deve ser reconhecida a preponderância da reincidência." },
-  { id: "Súmula 497/STF", fase: "Prescrição", cor: "blue",
-    text: "Quando se tratar de crime continuado, a prescrição regula-se pela pena imposta na sentença, não se computando o acréscimo decorrente da continuação." },
-  // Súmulas STJ adicionais
-  { id: "Súmula 438/STJ", fase: "Regime", cor: "green",
-    text: "O regime prisional semiaberto pode ser substituído pelo aberto, ainda que não preenchidos os requisitos legais, quando o apenado não tiver cometido crime doloso, não for reincidente em crime doloso e tiver cumprido 1/6 da pena." },
-  { id: "Súmula 439/STJ", fase: "Regime", cor: "green",
-    text: "A progressão de regime prisional exige o cumprimento de 1/6 da pena, salvo reincidente em crime doloso, para quem o percentual é de 1/4." },
-  { id: "Súmula 442/STJ", fase: "2ª fase", cor: "yellow",
-    text: "A fração de aumento ou diminuição de pena não fixada em lei deve ser fixada pelo juiz, observados os critérios do art. 68 do CP." },
-  { id: "Súmula 443/STJ", fase: "1ª/2ª fase", cor: "yellow",
-    text: "A majorante da reincidência não se confunde com a circunstância judicial do art. 59, I, do CP." },
-  { id: "Súmula 520/STJ", fase: "Regime", cor: "green",
-    text: "A progressão de regime prisional independe de requerimento do condenado." },
-  // Súmulas/teses STF adicionais
-  { id: "SV 59/STF", fase: "Dosimetria/Regime", cor: "blue",
-    text: "É impositiva a fixação do regime aberto e a substituição da pena por restritivas quando reconhecido tráfico privilegiado e ausentes vetores negativos na 1ª fase." },
-  { id: "SV 56/STF", fase: "Regime", cor: "green",
-    text: "A falta de estabelecimento penal adequado não autoriza a manutenção do condenado em regime prisional mais gravoso, devendo-se observar os parâmetros fixados no RE 641.320/RS." },
-  { id: "SV 26/STF", fase: "Regime", cor: "green",
-    text: "Para progressão em crime hediondo, observar inconstitucionalidade do art. 2º da Lei 8.072/1990, sem prejuízo de avaliar requisitos objetivos e subjetivos do benefício." },
-  { id: "Súmula 716/STF", fase: "Regime", cor: "green",
-    text: "Admite-se progressão de regime antes do trânsito em julgado da sentença condenatória." },
-  { id: "Súmula 715/STF", fase: "Execução", cor: "blue",
-    text: "A pena unificada para atender ao limite de 30 anos não é considerada para concessão de outros benefícios, como livramento condicional ou regime mais favorável." },
-  { id: "Súmula 723/STF", fase: "Sursis", cor: "yellow",
-    text: "Não se admite sursis por crime continuado se a soma da pena mínima da infração mais grave com o aumento mínimo de um sexto for superior a um ano." },
-  { id: "Súmula 499/STF", fase: "Sursis", cor: "yellow",
-    text: "Não obsta à concessão do sursis condenação anterior à pena de multa." },
-  { id: "Súmula 711/STF", fase: "Dosimetria", cor: "blue",
-    text: "A lei penal mais grave aplica-se ao crime continuado se sua vigência é anterior à cessação da continuidade." },
-  { id: "Súmula 604/STF", fase: "Prescrição", cor: "blue",
-    text: "A prescrição pela pena em concreto é somente da pretensão executória da pena privativa de liberdade." },
-];
-
-const PRESCRICAO = [
-  { faixa: "Acima de 12 anos", prazo: 20 },
-  { faixa: "Acima de 8 até 12 anos", prazo: 16 },
-  { faixa: "Acima de 4 até 8 anos", prazo: 12 },
-  { faixa: "Acima de 2 até 4 anos", prazo: 8 },
-  { faixa: "1 ano até 2 anos", prazo: 4 },
-  { faixa: "Inferior a 1 ano", prazo: 3 },
-];
-
-const FRACS = ["1/8","1/6","1/5","1/4","1/3","1/2"] as const;
-const FV: Record<string, number> = { "1/8":1/8,"1/6":1/6,"1/5":1/5,"1/4":1/4,"1/3":1/3,"1/2":1/2 };
-
-function prescPrazo(anos: number): number {
-  if (anos > 12) return 20;
-  if (anos > 8) return 16;
-  if (anos > 4) return 12;
-  if (anos > 2) return 8;
-  if (anos >= 1) return 4;
-  return 3;
-}
-
-function fmt(anos: number): string {
-  if (!anos || anos <= 0) return "0 dias";
-  const totalD = Math.round(anos * 360);
-  const a = Math.floor(totalD / 360);
-  const m = Math.floor((totalD % 360) / 30);
-  const d = totalD % 30;
-  const p: string[] = [];
-  if (a > 0) p.push(`${a} ano${a !== 1 ? "s" : ""}`);
-  if (m > 0) p.push(`${m} ${m !== 1 ? "meses" : "mês"}`);
-  if (d > 0) p.push(`${d} dia${d !== 1 ? "s" : ""}`);
-  return p.join(", ") || "0 dias";
-}
-
-type Color = "blue" | "yellow" | "red" | "green" | "gray";
-
-const COLOR_MAP: Record<Color, string> = {
-  blue: "bg-blue-50 border-blue-200 text-blue-800",
-  yellow: "bg-yellow-50 border-yellow-200 text-yellow-800",
-  red: "bg-red-50 border-red-200 text-red-800",
-  green: "bg-green-50 border-green-200 text-green-800",
-  gray: "bg-gray-50 border-gray-200 text-gray-700",
-};
-
-const PILL_MAP: Record<Color, string> = {
-  red: "bg-red-100 text-red-700",
-  green: "bg-green-100 text-green-700",
-  yellow: "bg-yellow-100 text-yellow-700",
-  blue: "bg-blue-100 text-blue-700",
-  gray: "bg-gray-100 text-gray-600",
-};
-
-interface InfoProps {
-  color?: Color;
-  title?: string;
-  children: ReactNode;
-}
-
-interface PillProps {
-  color: Color;
-  children: ReactNode;
-}
-
-const Info = ({ color = "blue", title, children }: InfoProps) => {
-  const c = COLOR_MAP[color];
-  return <div className={`border rounded-lg p-3 text-xs ${c} mb-3`}>{title && <p className="font-bold mb-1">{title}</p>}{children}</div>;
-};
-
-const Pill = ({ color, children }: PillProps) => {
-  const c = PILL_MAP[color];
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${c}`}>{children}</span>;
-};
-
-interface RowItem {
-  desc: string;
-  frac: string;
-}
+import { useState, useEffect } from "react";
+import { Info, Pill } from "./dosimetria/InfoPill";
+import {
+  VETORES, AGRAVANTES_LIST, ATENUANTES_LIST, MAJORANTES_LIST, MINORANTES_LIST,
+  SUMULAS, PRESCRICAO, FRACS, COLOR_MAP
+} from "./dosimetria/data";
+import {
+  FV, fmt, prescPrazo, parseCrimeCSV, calcRegime, regCorMap
+} from "./dosimetria/utils";
+import ResultadoFinal from "./dosimetria/ResultadoFinal";
+import PrescricaoDetracao from "./dosimetria/PrescricaoDetracao";
+import ConcursoSection from "./dosimetria/ConcursoSection";
+import MultaSection from "./dosimetria/MultaSection";
+import type { Color, Crime, RowItem, PrescricaoConfig, MedidaSeguranca, MultaConfig } from "./dosimetria/types";
 
 export default function DosimetriaPenal() {
   const [tab, setTab] = useState("calc");
@@ -222,6 +33,29 @@ export default function DosimetriaPenal() {
   const [reincEspec, setReincEspec] = useState(false);
   const [openV, setOpenV] = useState<number | null>(null);
 
+  // Novos estados
+  const [perSaltum, setPerSaltum] = useState(false);
+  const [medidaSeg, setMedidaSeg] = useState<MedidaSeguranca>({ ativa: false, tipo: "internação", prazo: "1" });
+  const [presc, setPresc] = useState<PrescricaoConfig>({
+    reducaoMetade: false,
+    retroativa: false,
+    dataDenuncia: "",
+    dataSentenca: "",
+    periodosSuspensao: [],
+    fugaDias: "",
+  });
+  const [multa, setMulta] = useState<MultaConfig>({ diasMulta: "", valorDiaMulta: "" });
+  const [crimesList, setCrimesList] = useState<Crime[]>([]);
+  const [crimeSelecionado, setCrimeSelecionado] = useState("");
+
+  // Carregar crimes CSV
+  useEffect(() => {
+    fetch("/crimes.csv")
+      .then(r => r.text())
+      .then(text => setCrimesList(parseCrimeCSV(text)))
+      .catch(() => setCrimesList([]));
+  }, []);
+
   // Validação de inputs numéricos
   const minVal = parseFloat(penMin);
   const maxVal = parseFloat(penMax);
@@ -239,70 +73,52 @@ export default function DosimetriaPenal() {
 
   // Fase 1
   const negN = classi.filter(c => c === "desfavoravel").length;
-  const acPorVetor = (negN > 0 && intv > 0) ? intv / 8 : 0;
+  const acPorVetor = negN > 0 && intv > 0 ? intv / 8 : 0;
   const penBase = hasData ? Math.min(min + negN * acPorVetor, max) : 0;
 
-  // Fase 2 — com validação de frações e teto no máximo legal (Art. 68, § 2º, CP)
+  // Fase 2
   const agAtivos = agravs.filter(a => a.desc?.trim() && a.frac in FV);
   const atAtivos = atens.filter(a => a.desc?.trim() && a.frac in FV);
-  let agSum = 0, atSum = 0;
-  agAtivos.forEach(a => { agSum += penBase * FV[a.frac]; });
-  atAtivos.forEach(a => { atSum += penBase * FV[a.frac]; });
+  const agSum = agAtivos.reduce((s, a) => s + penBase * FV[a.frac], 0);
+  const atSum = atAtivos.reduce((s, a) => s + penBase * FV[a.frac], 0);
   const penInter = hasData ? Math.min(Math.max(penBase + agSum - atSum, min), max) : 0;
 
-  // Fase 3 — com validação de frações e tentativa (Art. 14, CP)
+  // Fase 3
   let penDef = penInter;
   const minAtivos = minors.filter(m => m.desc?.trim() && m.frac in FV);
   const majAtivos = majors.filter(m => m.desc?.trim() && m.frac in FV);
   minAtivos.forEach(m => { penDef = penDef * (1 - FV[m.frac]); });
   majAtivos.forEach(m => { penDef = penDef * (1 + FV[m.frac]); });
-  // Aplicação da tentativa como minorante automático
   if (tentativa && penDef > 0 && tentativaFrac in FV) {
     penDef = penDef * (1 - FV[tentativaFrac]);
   }
   penDef = Math.max(penDef, 0);
 
-  // Detração — com validação de não-negatividade
+  // Detração
   const detMesesNum = parseFloat(detMeses);
   const detAnos = !isNaN(detMesesNum) && detMesesNum >= 0 ? detMesesNum / 12 : 0;
   const penRem = Math.max(penDef - detAnos, 0);
 
-  // Regime — com hediondo (Lei 13.964/2019), prisão simples (Art. 34) e reincidente específico
-  let regime: string = "—", regiF = "";
-  if (hasData) {
-    if (hediondo) {
-      regime = "Fechado";
-      regiF = "Art. 33, § 1º-A, Lei 13.964/2019 — crime hediondo com resultado morte/lesão grave: regime fechado obrigatório.";
-    } else if (tipoNorm === "prisão simples") {
-      regime = "Aberto";
-      regiF = "Art. 34, CP — prisão simples admite apenas regime aberto.";
-    } else if (tipoNorm === "detenção") {
-      regime = penDef <= 4 ? "Aberto" : "Semiaberto";
-      regiF = "Art. 33, caput — detenção não admite regime fechado inicial.";
-    } else if (penDef > 8) {
-      regime = "Fechado"; regiF = "Art. 33, § 2º, a — pena > 8 anos → fechado obrigatório.";
-    } else if (penDef > 4) {
-      regime = reincNorm ? "Fechado" : "Semiaberto";
-      regiF = reincNorm
-        ? "Art. 33, § 2º, b c/c § 3º. Reincidente pode ter regime agravado. Súm. 269/STJ: semiaberto cabível se favoráveis as circunstâncias."
-        : "Art. 33, § 2º, b — pena 4–8 anos, réu primário → semiaberto.";
-    } else {
-      // Pena ≤ 4 anos: reincidente específico → regime fixado pelo juiz (Lei 13.964/2019)
-      if (reincNorm && reincEspec) {
-        regime = "Fechado ou Semiaberto";
-        regiF = "Art. 33, § 3º c/c Lei 13.964/2019 — reincidente específico em crime doloso: regime fixado pelo juiz (fechado ou semiaberto).";
-      } else {
-        regime = reincNorm ? "Semiaberto" : "Aberto";
-        regiF = reincNorm
-          ? "Art. 33, § 2º, c c/c § 3º — reincidente não inicia em aberto. Súm. 269/STJ: semiaberto se favoráveis as circunstâncias judiciais."
-          : "Art. 33, § 2º, c — pena ≤ 4 anos, réu primário → aberto.";
-      }
-    }
-  }
+  // Regime
+  const regimeData = hasData ? calcRegime(penDef, tipoNorm, reincNorm, hediondo, reincEspec, perSaltum) : { regime: "—", regiF: "" };
+  const regime = regimeData.regime;
+  const regiF = regimeData.regiF;
 
   // Substituição
   const cabeSub = penDef > 0 && penDef <= 4 && !violNorm && !reincNorm;
   const subCondicional = penDef > 0 && penDef <= 4 && !violNorm && reincNorm;
+
+  const subTxt = cabeSub
+    ? "Cabe substituição por restritivas de direitos (art. 44, CP)"
+    : subCondicional
+    ? "Substituição condicional (reincidente não específico — art. 44, § 3º, CP)"
+    : "Não cabe substituição";
+
+  const subQuant = cabeSub
+    ? penDef <= 1
+      ? "1 pena restritiva de direitos ou multa (art. 44, § 2º, I)"
+      : "2 penas restritivas de direitos ou 1 restritiva + multa (art. 44, § 2º, II)"
+    : "";
 
   // Sursis
   const sursis = penDef > 0 && penDef <= 2 && !reincNorm;
@@ -316,39 +132,49 @@ export default function DosimetriaPenal() {
   const remRow = (set: React.Dispatch<React.SetStateAction<RowItem[]>>, i: number) => set(p => p.filter((_, j) => j !== i));
   const updRow = (set: React.Dispatch<React.SetStateAction<RowItem[]>>, i: number, k: keyof RowItem, v: string) => set(p => { const n = [...p]; n[i] = { ...n[i], [k]: v }; return n; });
 
-  const regCor: Record<string, string> = { Aberto:"text-green-400", Semiaberto:"text-yellow-400", Fechado:"text-red-400", "—":"text-gray-400" };
+  const handleCrimeChange = (nome: string) => {
+    setCrimeSelecionado(nome);
+    const crime = crimesList.find(c => c.nome === nome);
+    if (crime) {
+      setPenMin(String(crime.pena_min));
+      setPenMax(String(crime.pena_max));
+      setTipo(crime.tipo);
+      setViolencia(crime.violento ? "sim" : "nao");
+    }
+  };
 
   const audit = hasData ? [
     `MOLDURA: min = ${min} anos | max = ${max} anos | intervalo = ${intv.toFixed(4)} anos`,
     `INTERVALO ÷ 8 = ${(intv/8).toFixed(4)} anos por vetor negativo`,
-    `FASE 1: ${negN} vetor(es) negativo(s) × ${(intv/8).toFixed(4)} = +${(negN*acPorVetor).toFixed(4)} anos`,
-    `PENA-BASE: ${min} + ${(negN*acPorVetor).toFixed(4)} = ${penBase.toFixed(4)} anos → ${fmt(penBase)}`,
-    agAtivos.length ? `AGRAVANTES: penBase(${penBase.toFixed(4)}) × [${agAtivos.map(a=>a.frac).join(" + ")}] = +${agSum.toFixed(4)} anos` : null,
-    atAtivos.length ? `ATENUANTES: penBase(${penBase.toFixed(4)}) × [${atAtivos.map(a=>a.frac).join(" + ")}] = -${atSum.toFixed(4)} anos (mínimo ${min} anos — Súmula 231/STJ)` : null,
-    `PENA INTERMEDIÁRIA: ${penBase.toFixed(4)} + ${agSum.toFixed(4)} - ${atSum.toFixed(4)} = ${penInter.toFixed(4)} anos → ${fmt(penInter)}`,
-    ...minAtivos.map((m,i)=>`MINORANTE ${i+1} (${m.frac}): × ${(1-FV[m.frac]).toFixed(4)}`),
-    ...majAtivos.map((m,i)=>`MAJORANTE ${i+1} (${m.frac}): × ${(1+FV[m.frac]).toFixed(4)}`),
-    `PENA DEFINITIVA: ${penDef.toFixed(4)} anos → ${fmt(penDef)}`,
-    detAnos > 0 ? `DETRAÇÃO (art. 42): ${penDef.toFixed(4)} - ${detAnos.toFixed(4)} = ${penRem.toFixed(4)} anos → ${fmt(penRem)}` : null,
+    `FASE 1: ${negN} vetor(es) negativo(s) x ${(intv/8).toFixed(4)} = +${(negN*acPorVetor).toFixed(4)} anos`,
+    `PENA-BASE: ${min} + ${(negN*acPorVetor).toFixed(4)} = ${penBase.toFixed(4)} anos -> ${fmt(penBase)}`,
+    agAtivos.length ? `AGRAVANTES: penBase(${penBase.toFixed(4)}) x [${agAtivos.map(a=>a.frac).join(" + ")}] = +${agSum.toFixed(4)} anos` : null,
+    atAtivos.length ? `ATENUANTES: penBase(${penBase.toFixed(4)}) x [${atAtivos.map(a=>a.frac).join(" + ")}] = -${atSum.toFixed(4)} anos (minimo ${min} anos — Súmula 231/STJ)` : null,
+    `PENA INTERMEDIARIA: ${penBase.toFixed(4)} + ${agSum.toFixed(4)} - ${atSum.toFixed(4)} = ${penInter.toFixed(4)} anos -> ${fmt(penInter)}`,
+    ...minAtivos.map((m,i)=>`MINORANTE ${i+1} (${m.frac}): x ${(1-FV[m.frac]).toFixed(4)}`),
+    ...majAtivos.map((m,i)=>`MAJORANTE ${i+1} (${m.frac}): x ${(1+FV[m.frac]).toFixed(4)}`),
+    `PENA DEFINITIVA: ${penDef.toFixed(4)} anos -> ${fmt(penDef)}`,
+    detAnos > 0 ? `DETRACAO (art. 42): ${penDef.toFixed(4)} - ${detAnos.toFixed(4)} = ${penRem.toFixed(4)} anos -> ${fmt(penRem)}` : null,
     `REGIME INICIAL: ${regime} (${regiF})`,
-    `SUBSTITUIÇÃO (art. 44): ${subTxt}`,
-    sursis ? `SURSIS (art. 77): Cabível — sursis simples (pena ≤ 2 anos)` : sursisEt ? `SURSIS (art. 77, § 2º): Verificar sursis etário ou humanitário (pena ≤ 4 anos)` : `SURSIS (art. 77): Não cabível`,
-    prescAbst ? `PRESCRIÇÃO ABSTRATA (art. 109 CP): pena máx. ${max} anos → prazo de ${prescAbst} anos` : null,
-    prescConc ? `PRESCRIÇÃO CONCRETA (art. 109 CP): pena def. ${penDef.toFixed(2)} anos → prazo de ${prescConc} anos` : null,
+    `SUBSTITUICAO (art. 44): ${subTxt}`,
+    sursis ? `SURSIS (art. 77): Cabivel — sursis simples (pena <= 2 anos)` : sursisEt ? `SURSIS (art. 77, § 2º): Verificar sursis etario ou humanitario (pena <= 4 anos)` : `SURSIS (art. 77): Nao cabe`,
+    prescAbst ? `PRESCRICAO ABSTRATA (art. 109 CP): pena max. ${max} anos -> prazo de ${prescAbst} anos` : null,
+    prescConc ? `PRESCRICAO CONCRETA (art. 109 CP): pena def. ${penDef.toFixed(2)} anos -> prazo de ${prescConc} anos` : null,
   ].filter((line): line is string => line !== null) : [];
 
   const tabs = [
-    { id:"calc", label:"📐 Calculadora" },
-    { id:"refs", label:"📖 Lei" },
-    { id:"sumulas", label:"⚖️ Súmulas" },
-    { id:"audit", label:"🔍 Auditoria" },
+    { id: "calc", label: "Calculadora" },
+    { id: "concurso", label: "Concurso" },
+    { id: "refs", label: "Lei" },
+    { id: "sumulas", label: "Súmulas" },
+    { id: "audit", label: "Auditoria" },
   ];
 
   return (
     <div className="max-w-3xl mx-auto p-3 font-sans text-sm text-gray-800 bg-gray-50 min-h-screen">
       <div className="text-center mb-4">
-        <h1 className="text-xl font-bold text-gray-900">⚖️ Dosimetria Penal — Sistema Trifásico</h1>
-        <p className="text-xs text-gray-500">Art. 68, CP · Método de Nelson Hungria · Cálculo auditável com fundamento legal</p>
+        <h1 className="text-xl font-bold text-gray-900">Dosimetria Penal — Sistema Trifásico</h1>
+        <p className="text-xs text-gray-500">Art. 68, CP · Metodologia tradicional · Cálculo auditável com fundamento legal</p>
       </div>
 
       <div className="flex gap-1 mb-4 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
@@ -373,14 +199,32 @@ export default function DosimetriaPenal() {
             <Info color="blue">
               Identifique o tipo penal aplicável. Se houver qualificadora, use a pena da forma qualificada — ela altera a própria moldura, não entra na 3ª fase.
             </Info>
+
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Selecionar crime (auto-preenchimento)</label>
+              <select
+                value={crimeSelecionado}
+                onChange={e => handleCrimeChange(e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400"
+              >
+                <option value="">-- Selecione um crime --</option>
+                {crimesList.map((c, i) => (
+                  <option key={i} value={c.nome}>{c.nome}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-2 gap-3 mb-3">
-              {[(["Pena mínima (anos)", penMin, setPenMin] as [string, string, React.Dispatch<React.SetStateAction<string>>]), (["Pena máxima (anos)", penMax, setPenMax] as [string, string, React.Dispatch<React.SetStateAction<string>>])].map(([lbl, val, set]) => (
-                <div key={lbl}>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">{lbl}</label>
-                  <input type="number" min="0" step="0.5" value={val} onChange={e => set(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400" placeholder="ex: 1" />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Pena mínima (anos)</label>
+                <input type="number" min="0" step="0.5" value={penMin} onChange={e => setPenMin(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400" placeholder="ex: 1" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Pena máxima (anos)</label>
+                <input type="number" min="0" step="0.5" value={penMax} onChange={e => setPenMax(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400" placeholder="ex: 4" />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Tipo de pena</label>
                 <select value={tipo} onChange={e => setTipo(e.target.value)}
@@ -434,10 +278,20 @@ export default function DosimetriaPenal() {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                 <span>Reincidente específico em crime doloso (Art. 33, § 3º c/c Lei 13.964/2019)</span>
               </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={perSaltum} onChange={e => setPerSaltum(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Permitir regime fechado para pena &lt;= 4 anos (per saltum)</span>
+              </label>
+              {perSaltum && (
+                <Info color="yellow">
+                  Controvérsia doutrinária: alguns entendimentos do STJ admitem regime fechado (per saltum) para reincidentes com pena &lt;= 4 anos e circunstâncias judiciais desfavoráveis. Outros entendimentos limitam ao semiaberto como regime imediatamente mais gravoso. Esta opção permite ao usuário escolher a posição mais rigorosa.
+                </Info>
+              )}
             </div>
             {!isValidMax && penMax && (
               <div className="mt-2 bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700">
-                ⚠️ A pena máxima deve ser maior ou igual à pena mínima.
+                A pena máxima deve ser maior ou igual à pena mínima.
               </div>
             )}
             {hasData && (
@@ -451,6 +305,9 @@ export default function DosimetriaPenal() {
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
             <h2 className="font-bold text-sm mb-1">2. Primeira Fase — Pena-Base (Art. 59, CP)</h2>
             <p className="text-xs text-gray-500 mb-3">Clique em cada vetor para ver o que o torna desfavorável e os riscos de bis in idem.</p>
+            <Info color="blue">
+              Este aplicativo adota o método quantitativo de divisão do intervalo em 8 frações iguais (Método Tradicional). A valoração qualitativa das circunstâncias judiciais — atribuindo peso diferenciado conforme a intensidade de cada vetor no caso concreto — é responsabilidade do juiz e não pode ser inteiramente automatizada.
+            </Info>
             <div className="space-y-2">
               {VETORES.map((v, i) => (
                 <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -475,7 +332,7 @@ export default function DosimetriaPenal() {
                       <p><strong className="text-gray-700">O que avalia:</strong> {v.desc}</p>
                       <p><strong className="text-red-600">Desfavorável quando:</strong> {v.desfavoravel}</p>
                       <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-yellow-800">
-                        ⚠️ <strong>Alerta:</strong> {v.alerta}
+                        <strong>Alerta:</strong> {v.alerta}
                       </div>
                       <div>
                         <label className="font-semibold text-gray-700 block mb-1">Fundamento fático nos autos (para auditoria):</label>
@@ -490,8 +347,8 @@ export default function DosimetriaPenal() {
             </div>
             {hasData && (
               <div className="mt-3 bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-1">
-                <p>Vetores negativos: <strong>{negN}</strong> de 8 · Fórmula: min + (N × intervalo ÷ 8)</p>
-                <p>Cálculo: {min} + ({negN} × {(intv/8).toFixed(4)}) = {penBase.toFixed(4)} anos</p>
+                <p>Vetores negativos: <strong>{negN}</strong> de 8 · Fórmula: min + (N x intervalo ÷ 8)</p>
+                <p>Cálculo: {min} + ({negN} x {(intv/8).toFixed(4)}) = {penBase.toFixed(4)} anos</p>
                 <p className="font-bold text-blue-800 text-sm">Pena-base: {fmt(penBase)}</p>
               </div>
             )}
@@ -500,7 +357,7 @@ export default function DosimetriaPenal() {
           {/* Fase 2 */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
             <h2 className="font-bold text-sm mb-1">3. Segunda Fase — Agravantes e Atenuantes (Arts. 61–66, CP)</h2>
-            <Info color="yellow" title="⚠️ Regras obrigatórias nesta fase">
+            <Info color="yellow" title="Regras obrigatórias nesta fase">
               <ul className="space-y-1">
                 <li>• <strong>Súmula 231/STJ:</strong> atenuante não reduz abaixo do mínimo legal.</li>
                 <li>• <strong>Súmula 241/STJ:</strong> reincidência não pode ser agravante E circunstância judicial simultaneamente.</li>
@@ -515,7 +372,7 @@ export default function DosimetriaPenal() {
                 <div key={i} className="flex gap-2 mb-2 items-center">
                   <select value={a.desc} onChange={e => updRow(setAgravs, i, "desc", e.target.value)}
                     className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                    <option value="">— selecione a agravante —</option>
+                    <option value="">-- selecione a agravante --</option>
                     {AGRAVANTES_LIST.map(ag => (
                       <option key={ag.code+ag.desc} value={`${ag.code}: ${ag.desc}`}>{ag.code}: {ag.desc}</option>
                     ))}
@@ -536,7 +393,7 @@ export default function DosimetriaPenal() {
                 <div key={i} className="flex gap-2 mb-2 items-center">
                   <select value={a.desc} onChange={e => updRow(setAtens, i, "desc", e.target.value)}
                     className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                    <option value="">— selecione a atenuante —</option>
+                    <option value="">-- selecione a atenuante --</option>
                     {ATENUANTES_LIST.map(at => (
                       <option key={at.code+at.desc} value={`${at.code}: ${at.desc}`}>{at.code}: {at.desc}</option>
                     ))}
@@ -563,7 +420,7 @@ export default function DosimetriaPenal() {
           {/* Fase 3 */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
             <h2 className="font-bold text-sm mb-1">4. Terceira Fase — Causas de Aumento e Diminuição (Art. 68, CP)</h2>
-            <Info color="blue" title="📌 Regras desta fase">
+            <Info color="blue" title="Regras desta fase">
               <ul className="space-y-1">
                 <li>• Na 3ª fase, a pena <strong>pode ultrapassar o máximo</strong> ou ficar <strong>abaixo do mínimo</strong> legal.</li>
                 <li>• Ordem: aplica-se primeiro as minorantes, depois as majorantes.</li>
@@ -575,9 +432,14 @@ export default function DosimetriaPenal() {
               <p className="text-xs font-bold text-red-600 mb-2">Causas de Aumento (Majorantes)</p>
               {majors.map((m, i) => (
                 <div key={i} className="flex gap-2 mb-2 items-center">
-                  <input value={m.desc} onChange={e => updRow(setMajors, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                    placeholder="Ex: Art. 157, § 2º, I — emprego de arma" />
+                  <select value={m.desc} onChange={e => updRow(setMajors, i, "desc", e.target.value)}
+                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                    <option value="">-- selecione a majorante --</option>
+                    {MAJORANTES_LIST.map(ma => (
+                      <option key={ma.code+ma.desc} value={`${ma.code}: ${ma.desc}`}>{ma.code}: {ma.desc}</option>
+                    ))}
+                    <option value="Outra">Outra (digite manualmente)</option>
+                  </select>
                   <select value={m.frac} onChange={e => updRow(setMajors, i, "frac", e.target.value)}
                     className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                     {FRACS.map(f => <option key={f}>{f}</option>)}
@@ -591,9 +453,14 @@ export default function DosimetriaPenal() {
               <p className="text-xs font-bold text-green-600 mb-2">Causas de Diminuição (Minorantes)</p>
               {minors.map((m, i) => (
                 <div key={i} className="flex gap-2 mb-2 items-center">
-                  <input value={m.desc} onChange={e => updRow(setMinors, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                    placeholder="Ex: Tentativa (art. 14, II, CP)" />
+                  <select value={m.desc} onChange={e => updRow(setMinors, i, "desc", e.target.value)}
+                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                    <option value="">-- selecione a minorante --</option>
+                    {MINORANTES_LIST.map(mi => (
+                      <option key={mi.code+mi.desc} value={`${mi.code}: ${mi.desc}`}>{mi.code}: {mi.desc}</option>
+                    ))}
+                    <option value="Outra">Outra (digite manualmente)</option>
+                  </select>
                   <select value={m.frac} onChange={e => updRow(setMinors, i, "frac", e.target.value)}
                     className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                     {FRACS.map(f => <option key={f}>{f}</option>)}
@@ -606,79 +473,74 @@ export default function DosimetriaPenal() {
             {hasData && (
               <div className="mt-3 bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-1">
                 <p>Pena intermediária: {fmt(penInter)}</p>
-                {minAtivos.map((m,i) => <p key={i} className="text-green-700">Minorante {m.frac}: × {(1-FV[m.frac]).toFixed(4)}</p>)}
-                {majAtivos.map((m,i) => <p key={i} className="text-red-700">Majorante {m.frac}: × {(1+FV[m.frac]).toFixed(4)}</p>)}
+                {minAtivos.map((m,i) => <p key={i} className="text-green-700">Minorante {m.frac}: x {(1-FV[m.frac]).toFixed(4)}</p>)}
+                {majAtivos.map((m,i) => <p key={i} className="text-red-700">Majorante {m.frac}: x {(1+FV[m.frac]).toFixed(4)}</p>)}
                 <p className="font-bold text-blue-800 text-sm">Pena definitiva: {fmt(penDef)}</p>
               </div>
             )}
           </div>
 
-          {/* Detração */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 className="font-bold text-sm mb-1">5. Detração Penal (Art. 42, CP)</h2>
-            <Info color="gray">
-              Computa-se na pena privativa de liberdade o tempo de prisão provisória, prisão administrativa e internação. A detração pode alterar o regime inicial e os marcos de progressão de regime.
-            </Info>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Tempo de prisão provisória (meses)</label>
-              <input type="number" min="0" value={detMeses} onChange={e => setDetMeses(e.target.value)}
-                className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400" placeholder="ex: 6" />
-            </div>
-            {detAnos > 0 && hasData && (
-              <div className="mt-2 bg-blue-50 border border-blue-200 rounded p-2 text-xs">
-                {fmt(penDef)} − {fmt(detAnos)} = <strong>{fmt(penRem)}</strong> (pena remanescente)
-              </div>
-            )}
-          </div>
+          {/* Multa */}
+          <MultaSection multa={multa} setMulta={setMulta} />
 
-          {/* Resultado */}
-          {hasData && (
-            <div className="bg-gray-900 rounded-xl p-4 shadow-lg">
-              <h2 className="font-bold text-white text-sm border-b border-gray-700 pb-2 mb-3">📋 Resultado Final</h2>
-              <div className="space-y-2 text-xs">
-                {[
-                  ["Pena-base (1ª fase)", fmt(penBase), `Art. 59, CP · ${negN} vetor(es) negativo(s)`],
-                  ["Pena intermediária (2ª fase)", fmt(penInter), `Agravantes/Atenuantes · Súmula 231/STJ aplicada`],
-                  ["Pena definitiva (3ª fase)", fmt(penDef), `Causas de aumento/diminuição · Art. 68, CP`],
-                  ...(detAnos > 0 ? [["Pena remanescente (pós-detração)", fmt(penRem), `Art. 42, CP · ${detMeses} meses deduzidos`]] : []),
-                ].map(([lbl, val, sub]) => (
-                  <div key={lbl as string} className="bg-gray-800 rounded-lg px-3 py-2">
-                    <p className="text-gray-400">{lbl as string}</p>
-                    <p className="text-lg font-bold text-yellow-300">{val as string}</p>
-                    <p className="text-gray-500">{sub as string}</p>
-                  </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-gray-400 text-xs">Regime inicial</p>
-                    <p className={`font-bold text-sm ${regCor[regime]}`}>{regime}</p>
-                    <p className="text-gray-500 text-xs mt-1">{regiF}</p>
-                  </div>
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-gray-400 text-xs">Substituição (art. 44)</p>
-                    <p className={`font-bold text-xs mt-1 ${cabeSub ? "text-green-400" : subCondicional ? "text-yellow-400" : "text-red-400"}`}>{subTxt}</p>
-                    {subQuant && <p className="text-gray-500 text-xs mt-0.5">{subQuant}</p>}
-                  </div>
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-gray-400 text-xs">Sursis (art. 77)</p>
-                    <p className={`font-bold text-xs mt-1 ${sursis ? "text-green-400" : sursisEt ? "text-yellow-400" : "text-red-400"}`}>
-                      {sursis ? "✓ Cabível — sursis simples (≤ 2 anos)" : sursisEt ? "⚠ Verificar sursis etário/humanitário" : "✕ Não cabível"}
-                    </p>
-                  </div>
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-gray-400 text-xs">Prescrição (art. 109)</p>
-                    <p className="text-blue-300 font-bold text-xs mt-1">Abstrata: {prescAbst} anos</p>
-                    {prescConc && <p className="text-blue-200 text-xs">Concreta: {prescConc} anos</p>}
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-3 border-t border-gray-700 pt-2">
-                ⚠️ Cálculo estimativo. A dosimetria definitiva depende de fundamentação concreta nos autos e discricionariedade judicial motivada.
-              </p>
-            </div>
-          )}
+          {/* Prescrição e Detração */}
+          <PrescricaoDetracao
+            detMeses={detMeses}
+            setDetMeses={setDetMeses}
+            penDef={penDef}
+            penRem={penRem}
+            hasData={hasData}
+            tipoNorm={tipoNorm}
+            reincNorm={reincNorm}
+            hediondo={hediondo}
+            perSaltum={perSaltum}
+            reincEspec={reincEspec}
+            presc={presc}
+            setPresc={setPresc}
+            medidaSeg={medidaSeg}
+            setMedidaSeg={setMedidaSeg}
+          />
+
+          {/* Resultado Final */}
+          <ResultadoFinal
+            penBase={penBase}
+            penInter={penInter}
+            penDef={penDef}
+            penRem={penRem}
+            detAnos={detAnos}
+            detMeses={detMeses}
+            negN={negN}
+            min={min}
+            max={max}
+            hasData={hasData}
+            regime={regime}
+            regiF={regiF}
+            cabeSub={cabeSub}
+            subCondicional={subCondicional}
+            sursis={sursis}
+            sursisEt={sursisEt}
+            prescAbst={prescAbst}
+            prescConc={prescConc}
+            classi={classi}
+            obs={obs}
+            agravs={agravs}
+            atens={atens}
+            majors={majors}
+            minors={minors}
+            tipoNorm={tipoNorm}
+            reincNorm={reincNorm}
+            hediondo={hediondo}
+            tentativa={tentativa}
+            tentativaFrac={tentativaFrac}
+            multa={multa}
+            medidaSeg={medidaSeg}
+            presc={presc}
+          />
         </div>
       )}
+
+      {/* ========== CONCURSO ========== */}
+      {tab === "concurso" && <ConcursoSection />}
 
       {/* ========== REFERÊNCIAS LEGAIS ========== */}
       {tab === "refs" && (
@@ -702,6 +564,12 @@ export default function DosimetriaPenal() {
               c: "A execução da pena privativa de liberdade não superior a 2 anos poderá ser suspensa por 2 a 4 anos.\nRequisitos: não reincidente em crime doloso; circunstâncias do art. 59 indiquem suficiência.\n\nSursis etário (§ 2º): pena ≤ 4 anos → condenado maior de 70 anos.\nSursis humanitário (§ 2º): pena ≤ 4 anos → razões de saúde." },
             { t: "Art. 42, CP — Detração Penal",
               c: "Computam-se, na pena privativa de liberdade e na medida de segurança, o tempo de prisão provisória, no Brasil ou no estrangeiro, o de prisão administrativa e o de internação em qualquer dos estabelecimentos referidos no artigo anterior." },
+            { t: "Art. 98, CP — Medida de Segurança",
+              c: "Quando o agente for, por qualquer causa, isento de pena, pode ser-lhe aplicada medida de segurança, desde que haja periculosidade.\n\nA medida de segurança de internação não excederá a 3 anos, podendo ser renovada por igual período, se a periculosidade persistir." },
+            { t: "Art. 76, CP — Multa",
+              c: "A multa é a quantia fixada em dias-multa, correspondendo cada dia-multa a 1/30 do salário mínimo vigente ao tempo da sentença.\n\n§ 1º: O número de dias-multa não será inferior a 10 nem superior a 360.\n§ 2º: O valor do dia-multa não será inferior a 1/30 nem superior a 5/30 do salário mínimo." },
+            { t: "Art. 112, LEP — Progressão de Regime",
+              c: "A progressão de regime obedece aos seguintes marcos:\nI – reclusão > 8 anos: 5/6 (exceto hediondo: 2/5 primário, 3/5 reincidente);\nII – reclusão 4–8 anos: 3/5;\nIII – reclusão < 4 anos: 1/2;\nIV – detenção: 1/3.\n\nReincidente em crime doloso: 1/4 da pena." },
             { t: "Art. 109, CP — Prescrição da Pretensão Punitiva",
               c: "A prescrição regula-se pelo máximo da pena privativa de liberdade cominada ao crime:\nI – 20 anos, se o máximo > 12 anos;\nII – 16 anos, se > 8 até 12 anos;\nIII – 12 anos, se > 4 até 8 anos;\nIV – 8 anos, se > 2 até 4 anos;\nV – 4 anos, se 1 a 2 anos;\nVI – 3 anos, se < 1 ano.\n\nArt. 115, CP: redução à metade para réu menor de 21 anos na data do fato ou maior de 70 na sentença.\nArt. 110, § 1º: prescrição retroativa regula-se pela pena concreta." },
             { t: "Art. 14, II, CP — Tentativa",
@@ -799,7 +667,7 @@ export default function DosimetriaPenal() {
       {/* ========== AUDITORIA ========== */}
       {tab === "audit" && (
         <div className="space-y-3">
-          <Info color="blue" title="🔍 Como auditar">
+          <Info color="blue" title="Como auditar">
             Esta seção reproduz cada passo do cálculo com os valores exatos em anos decimais (base: 1 ano = 360 dias = 12 meses). Use-a para confrontar com a sentença ou identificar divergências.
           </Info>
           {!hasData ? (
@@ -812,7 +680,7 @@ export default function DosimetriaPenal() {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Log de Cálculo</h3>
                 <div className="space-y-1 font-mono">
                   {audit.map((line, i) => (
-                    <p key={i} className={`text-xs ${line.startsWith("PENA")||line.startsWith("REGIME")||line.startsWith("SUBSTITUIÇÃO")||line.startsWith("SURSIS")||line.startsWith("PRESCRIÇÃO") ? "text-yellow-300 font-bold" : "text-green-300"}`}>
+                    <p key={i} className={`text-xs ${line.startsWith("PENA")||line.startsWith("REGIME")||line.startsWith("SUBSTITUICAO")||line.startsWith("SURSIS")||line.startsWith("PRESCRICAO") ? "text-yellow-300 font-bold" : "text-green-300"}`}>
                       {String(i+1).padStart(2,"0")}. {line}
                     </p>
                   ))}
@@ -852,12 +720,12 @@ export default function DosimetriaPenal() {
               <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                 <h3 className="font-bold text-sm mb-3">Fórmulas Utilizadas</h3>
                 <div className="bg-gray-50 rounded p-3 font-mono text-xs text-gray-700 space-y-1.5">
-                  <p><strong>1ª fase (pena-base):</strong> min + (N_neg × intervalo ÷ 8)</p>
-                  <p><strong>Agravante:</strong> penBase × fração</p>
-                  <p><strong>Atenuante:</strong> penBase × fração → resultado ≥ mínimo e ≤ máximo legal (Súm. 231/STJ; Art. 68, § 2º, CP)</p>
+                  <p><strong>1ª fase (pena-base):</strong> min + (N_neg x intervalo ÷ 8)</p>
+                  <p><strong>Agravante:</strong> penBase x fração</p>
+                  <p><strong>Atenuante:</strong> penBase x fração → resultado ≥ mínimo e ≤ máximo legal (Súm. 231/STJ; Art. 68, § 2º, CP)</p>
                   <p><strong>2ª fase (pena intermediária):</strong> penBase + Σagravantes − Σatenuantes → limitada ao intervalo legal</p>
-                  <p><strong>Minorante:</strong> penAnterior × (1 − fração)</p>
-                  <p><strong>Majorante:</strong> penAnterior × (1 + fração)</p>
+                  <p><strong>Minorante:</strong> penAnterior x (1 − fração)</p>
+                  <p><strong>Majorante:</strong> penAnterior x (1 + fração)</p>
                   <p><strong>3ª fase (pena definitiva):</strong> após todas as causas (pode sair da moldura)</p>
                   <p><strong>Tentativa (art. 14, II):</strong> minorante automática conforme iter criminis</p>
                   <p><strong>Detração:</strong> penDef − (meses ÷ 12)</p>
