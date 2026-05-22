@@ -1,156 +1,158 @@
 # Estado do Projeto: Calculadora de Dosimetria Penal
 
 ## Visão Geral
-Aplicativo web educacional para cálculo de dosimetria penal brasileira (sistema trifásico do Código Penal). Desenvolvido com React + TypeScript + Tailwind CSS, utilizando Vite como bundler. O objetivo é auxiliar estudantes e profissionais do direito a compreenderem e aplicarem a dosimetria da pena de forma didática e estruturada.
+Aplicativo web educacional para cálculo de dosimetria penal brasileira pelo sistema trifásico do Código Penal. Desenvolvido com React + TypeScript + Tailwind CSS e Vite. O objetivo é auxiliar estudantes e profissionais do direito a compreenderem a cadeia lógica da dosimetria, separando claramente moldura penal, três fases da pena privativa de liberdade e efeitos pós-dosimetria.
+
+## Última Atualização Relevante
+- Corrigida a numeração lógica: a moldura penal agora é etapa preliminar, não uma fase da dosimetria.
+- Corrigida a tentativa: é tratada como causa de diminuição da 3ª fase e aplicada antes das majorantes.
+- Relatórios e auditoria passaram a distinguir fases da pena de efeitos pós-dosimetria, como detração, regime, substituição, sursis, prescrição, multa e concurso.
+- Build validado com `npm run build`.
+- Commit enviado: `aa30ac3 fix: corrige ordem logica da dosimetria`.
 
 ## Stack Tecnológica
 - **Framework**: React 18.3.1
-- **Linguagem**: TypeScript 5.6.2 (strict mode, sem `any`)
+- **Linguagem**: TypeScript 5.6.2 (strict mode)
 - **Estilização**: Tailwind CSS 3.4.17
-- **Bundler**: Vite 5.4.11
-- **Build**: 39 módulos, ~230 KB JS (gzip ~69 KB)
+- **Bundler**: Vite 5.4.21
+- **Build atual**: 39 módulos, `dist/assets/index-C3cAPTrT.js` ~244 KB (gzip ~72 KB)
 - **Deploy**: Build estático em `dist/`
 
-## Estrutura de Diretórios
-```
+## Estrutura Atual
+```text
 src/
-├── components/
-│   ├── DosimetriaPenal.tsx          # Componente principal orquestrador (antigo monolito de 880 linhas, agora delega)
-│   ├── dosimetria/
-│   │   ├── types.ts                 # Interfaces e tipos (PenaDefinida, MultaConfig, etc.)
-│   │   ├── utils.ts                 # Funções utilitárias (formatadores, cálculos, generateRelatorio)
-│   │   ├── ResultadoFinal.tsx       # Exibe pena-base, intermediária, definitiva, regime, etc.
-│   │   ├── ResultadoDetalhado.tsx   # Relatório detalhado com copy-to-clipboard
-│   │   ├── ConcursoSection.tsx      # Concurso de crimes com seletor de crimes.csv
-│   │   ├── MultaSection.tsx         # Configuração de multa (salário mínimo + fração)
-│   │   ├── PrescricaoSection.tsx    # Cálculo de prescrição abstrata/concreta
-│   │   ├── ProgressaoSection.tsx    # Estimativa de progressão de regime
-│   │   ├── RegimeSection.tsx        # Seletor de regime inicial
-│   │   ├── SubstituicaoSection.tsx  # Verificação de substituição/sursis
-│   │   ├── ConcursoModal.tsx       # Modal para adicionar crimes ao concurso
-│   │   ├── ConcursoResult.tsx       # Resultado do cálculo de concurso
-│   │   ├── RelatorioCopiavel.tsx    # Componente para copiar relatório
-│   │   ├── VectorItem.tsx           # Item de vetor (8 vetores do Art. 59)
-│   │   ├── FactorRow.tsx            # Linha de fator (agravante/atenuante/majorante/minorante)
-│   │   ├── FactorList.tsx           # Lista de fatores com botões +/-/limpar
-│   │   ├── SomaFatores.tsx          # Soma e explicação de fatores
-│   │   ├── CrimeSelector.tsx        # Seletor de crime do CSV
-│   │   ├── InputWithValidation.tsx  # Input com validação
-│   │   ├── NumberInput.tsx          # Input numérico com formatação
-│   │   ├── InfoBox.tsx              # Caixa de informação contextual
-│   │   └── ExplainerBox.tsx         # Explicação didática
-├── App.tsx                          # Entry point
-├── main.tsx                         # Renderização React
-└── index.css                        # Tailwind directives
+├── App.tsx
+├── main.tsx
+├── index.css
+└── components/
+    ├── DosimetriaPenal.tsx          # Orquestrador de estado e abas
+    └── dosimetria/
+        ├── ConcursoSection.tsx      # Concurso material, formal e continuado
+        ├── InfoPill.tsx             # Componentes visuais auxiliares
+        ├── MultaSection.tsx         # Configuração da pena de multa
+        ├── PrescricaoDetracao.tsx   # Detração, prescrição e medida de segurança
+        ├── ResultadoFinal.tsx       # Resumo visual e relatório copiável
+        ├── data.ts                  # Listas legais, súmulas, frações e referências
+        ├── types.ts                 # Tipos compartilhados
+        └── utils.ts                 # Cálculos, parser CSV, regime, concurso e relatório
 
 public/
-└── crimes.csv                       # 96 crimes com penas mínimas/máximas e tipos
+└── crimes.csv                       # 96 crimes com molduras e observações
+
+referencias/
+└── *.md                             # Capturas oficiais do Planalto usadas como referência
 ```
 
+## Cadeia Lógica Implementada
+
+### Etapa Preliminar — Moldura Penal
+- Seleção do crime via `public/crimes.csv` com autocomplete por `datalist`.
+- Preenchimento automático de pena mínima, pena máxima, tipo de pena e indicador de violência/grave ameaça.
+- Qualificadoras devem ser refletidas diretamente na moldura escolhida; não entram como majorantes.
+
+### 1ª Fase — Pena-Base
+- Usa os 8 vetores do art. 59 do CP.
+- Método quantitativo: intervalo entre mínimo e máximo dividido por 8.
+- Cada vetor desfavorável aumenta a pena-base em `intervalo / 8`.
+- Vetores favoráveis são registrados como informação didática, mas não reduzem abaixo do mínimo.
+
+### 2ª Fase — Agravantes e Atenuantes
+- Agravantes e atenuantes são informadas dinamicamente com frações selecionáveis.
+- A base de cálculo é a pena-base.
+- O resultado é limitado à moldura legal, aplicando a lógica da Súmula 231/STJ para impedir redução abaixo do mínimo.
+- O app exibe alertas de bis in idem e súmulas relevantes.
+
+### 3ª Fase — Causas de Aumento e Diminuição
+- Minorantes são aplicadas primeiro.
+- Tentativa (art. 14, parágrafo único, CP) é minorante automática da 3ª fase, com redução de 1/3 a 2/3.
+- Majorantes são aplicadas depois das minorantes.
+- A pena definitiva pode ultrapassar o máximo ou ficar abaixo do mínimo legal.
+- O relatório copiável e o log de auditoria mostram a ordem exata dos multiplicadores.
+
+### Efeitos Pós-Dosimetria
+- **Detração**: calcula pena remanescente sem alterar a pena definitiva.
+- **Regime inicial**: usa pena definitiva ou pena remanescente quando houver detração, com fundamento textual.
+- **Substituição**: verifica art. 44 do CP com distinção entre cabimento direto e hipótese condicionada do § 3º.
+- **Sursis**: verifica sursis simples e alerta para sursis etário/humanitário.
+- **Prescrição**: calcula abstrata pela pena máxima informada e concreta pela pena definitiva.
+- **Progressão**: exibida como estimativa didática de execução penal, com alerta para conferir a LEP vigente.
+- **Multa**: calcula dias-multa e valor do dia-multa.
+- **Concurso de crimes**: usa penas definitivas individuais importadas da calculadora ou preenchidas manualmente.
+
 ## Funcionalidades Implementadas
-
-### Core (Sistema Trifásico)
-1. **1ª Fase — Pena-Base (Art. 59, CP)**: 8 vetores classificáveis (favorável/neutro/desfavorável)
-2. **2ª Fase — Agravantes/Atenuantes (Arts. 61-66)**: Lista dinâmica com frações (1/6 a 1/2)
-3. **3ª Fase — Majorantes/Minorantes (Art. 68)**: Lista dinâmica, pode extrapolar mín/máx
-4. **Tentativa (Art. 14, II)**: Checkbox com fração de redução (1/2 a 2/3)
-5. **Detração (Art. 42)**: Campo para prisão provisória em anos
-6. **Regime Inicial (Art. 33)**: Automático + manual, com detração recalcula regime
-7. **Reincidência**: Checkbox que afeta regime e cálculos
-8. **Hediondo**: Checkbox que bloqueia regime aberto
-9. **Cálculo de Frações**: Soma vetorial com limite de 1/4 por fase (Súmula 231/STJ)
-
-### Funcionalidades Avançadas
-10. **Concurso de Crimes**: Seletor de crimes via CSV, cálculo de pena total (Art. 70, CP)
-11. **Multa**: Configuração por salário mínimo + fração (1/30 a 5/30), dias-multa (10-360)
-12. **Prescrição**: Abstrata (baseada na pena máxima do tipo) e concreta (baseada na pena aplicada)
-13. **Progressão de Regime**: Estimativa de tempo para progressão (Art. 112, LEP)
-14. **Substituição**: Verificação automática de cabimento (Art. 44, CP)
-15. **Sursis**: Verificação de sursis simples e etário/humanitário (Art. 77, CP)
-16. **Relatório Didático**: Texto explicativo passo a passo, copiável para clipboard
-
-### UI/UX
-17. **Auto-preenchimento de crimes**: Carrega `crimes.csv` via fetch + parse
-18. **Validação de inputs**: Campos numéricos com limites, feedback visual
-19. **Responsividade**: Layout adaptativo com Tailwind
-20. **Tooltips/Explainers**: Explicações jurídicas inline
-
-### Base de Crimes
-21. **Legislação especial no CSV**: Inclui crimes da Lei de Drogas, Estatuto do Desarmamento, Lei de Crimes Ambientais, ECA e CTB com molduras privativas de liberdade claras.
-22. **Correção de tipos incompatíveis**: Porte de drogas para uso próprio foi removido da base de molduras privativas e tráfico privilegiado foi tratado como causa de diminuição na 3ª fase.
+- Base de 96 crimes com legislação especial: Lei de Drogas, Estatuto do Desarmamento, Crimes Ambientais, ECA e CTB.
+- Observações do CSV aparecem na seleção principal e nos itens do concurso.
+- Aba Concurso preserva estado ao trocar abas.
+- Botão `Adicionar pena definitiva ao concurso` envia a pena calculada para a aba Concurso.
+- Concurso de crimes contempla:
+  - Concurso material.
+  - Concurso formal próprio.
+  - Concurso formal impróprio.
+  - Crime continuado com fração de 1/6 a 2/3.
+  - Perguntas fáticas e sugestão didática de modalidade.
+  - Relatório copiável próprio.
+- Relatório final claro, com resumo executivo, explicação didática e seções pós-dosimetria.
+- `.gitignore` ignora `*:Zone.Identifier`.
 
 ## Decisões Arquiteturais Críticas
 
-### 1. Componentização vs Monolito
-- **Decisão**: O componente original `DosimetriaPenal.tsx` tinha 880 linhas. Foi refatorado em 8 módulos menores (ResultadoFinal, ResultadoDetalhado, ConcursoSection, MultaSection, PrescricaoSection, ProgressaoSection, RegimeSection, SubstituicaoSection) + componentes atômicos.
-- **Motivo**: Manter legibilidade e permitir manutenção independente.
-- **Estado atual**: `DosimetriaPenal.tsx` ainda gerencia o state global, delegando renderização aos subcomponentes.
+### 1. Estado Centralizado
+- `DosimetriaPenal.tsx` mantém o estado global da calculadora e repassa props aos subcomponentes.
+- Essa abordagem evita perda de dados ao trocar abas, especialmente no concurso de crimes.
 
-### 2. Método de Dosimetria
-- **Adotado**: Quantitativo de 8 frações (metodologia Hungria/Taipina).
-- **Não adotado**: Valoração qualitativa (peso diferenciado por intensidade de cada vetor).
-- **Justificativa**: A valoração qualitativa é discricionária do juiz e não pode ser automatizada. O app documenta isso claramente na UI e no relatório.
+### 2. Parser CSV Simples
+- `parseCrimeCSV` usa `line.split(",")` e aceita apenas linhas com 6 ou 8 campos.
+- Por isso, `public/crimes.csv` não deve conter vírgulas internas não tratadas em nomes ou observações.
+- Essa restrição foi mantida para evitar refatoração maior do parser nesta etapa.
 
-### 3. Cálculo de Frações
-- **Implementação**: Soma vetorial pura (aditiva) com teto de 1/4 por fase.
-- **Limitação**: Não implementa a redução proporcional quando a soma excede 1/4 (Súmula 231/STJ). O app simplesmente aplica o teto.
-- **Referência**: Súmula 231, STJ — "A soma das circunstâncias judiciais não pode ultrapassar a fração correspondente a um quarto da pena."
+### 3. Método Quantitativo
+- O app adota método quantitativo para fins didáticos.
+- Não implementa ponderação qualitativa por intensidade de cada vetor.
+- A fundamentação concreta continua sendo responsabilidade do usuário/julgador.
 
-### 4. Prescrição
-- **Decisão**: Usar o campo "Pena máxima" inserido pelo usuário para prescrição abstrata.
-- **Alerta na UI**: A prescrição abstrata usa a pena máxima do TIPO, não a moldura aplicável ao caso concreto. Isso é uma simplificação educacional.
+### 4. Separação Entre Pena Definitiva e Pena Remanescente
+- Detração não altera a pena definitiva.
+- Pena remanescente é exibida separadamente para efeitos de regime e execução.
 
-### 5. Regime por Saltum
-- **Decisão**: Implementado como opção desativada por padrão com texto explicativo sobre a controvérsia doutrinária.
-- **Motivo**: Evitar erros por usuários que não conhecem o debate (Taipina admite; Hungria rejeita).
+### 5. Fontes e Referências
+- Preferência por referências oficiais do Planalto para CP e CPP.
+- LEP/progressão é tratada com cautela e aviso de conferência da legislação vigente.
 
-### 6. TypeScript Strict
-- **Regra**: Nenhum `any` permitido.
-- **Consequência**: Todos os estados, props e retornos de funções são tipados. Mudanças em interfaces exigem atualização em todos os consumidores.
+## Limitações Conhecidas
+- Não há testes unitários automatizados para `utils.ts`.
+- Não há persistência em `localStorage`; recarregar a página perde os dados.
+- O parser CSV é frágil para campos com vírgulas.
+- Progressão de regime é estimativa didática e não substitui análise completa da LEP vigente.
+- Sursis etário/humanitário é indicado como alerta, não como decisão final.
+- Acessibilidade ainda pode melhorar com ARIA e navegação por teclado.
+- Não há exportação PDF nem histórico de cálculos.
 
-## Bugs Conhecidos e Limitações
-
-### Limitações Jurídicas (Não são bugs, mas simplificações)
-1. **Valoração qualitativa**: O app não permite atribuir pesos diferentes aos vetores (ex: "muito desfavorável" vs "pouco desfavorável"). Cada vetor vale exatamente 1/8 do intervalo.
-2. **Prescrição abstrata**: Usa pena máxima do tipo, não a moldura aplicável (que pode ser menor por causa de causas de diminuição).
-3. **Sursis etário/humanitário**: Verifica idade e doença, mas a decisão final requer análise judicial.
-4. **Concurso de crimes**: Cálculo de pena múltipla por soma (Art. 70, § 1º), mas não implementa o Art. 70, § 2º (aumento de 1/6 a 2/3 quando há continuidade delitiva).
-
-### Limitações Técnicas
-5. **CSV de crimes**: Fixo em `public/crimes.csv`. Não há interface para editar/adicionar crimes.
-6. **Persistência**: Nenhum localStorage/sessionStorage. Dados são perdidos ao recarregar.
-7. **Acessibilidade**: Tooltips não são acessíveis via teclado (falta `aria-describedby` dinâmico).
-8. **Internacionalização**: Textos hardcoded em português. Não há i18n.
-
-### Potenciais Problemas
-9. **Encoding do CSV**: `crimes.csv` está em UTF-8. Se o servidor não servir com encoding correto, caracteres acentuados podem quebrar.
-10. **Build em Windows vs Linux**: O `crimes.csv` é carregado via `fetch('/crimes.csv')`. Em dev (Vite), funciona. Em produção, depende da config do servidor.
-
-## Próximos Passos Pendentes (Backlog)
+## Backlog
 
 ### Prioridade Alta
-- [ ] Adicionar testes unitários para `utils.ts` (especialmente cálculos de frações, regime, progressão)
-- [ ] Implementar persistência local (localStorage) para não perder dados
-- [ ] Melhorar acessibilidade (ARIA labels, navegação por teclado)
+- [ ] Adicionar testes unitários para `utils.ts`, especialmente `prescPrazo`, `calcRegime`, `calcConcurso` e ordem da 3ª fase.
+- [ ] Criar teste de regressão para tentativa aplicada antes das majorantes.
+- [ ] Implementar persistência local para cálculos em andamento.
+- [ ] Melhorar acessibilidade dos controles e explicações.
 
 ### Prioridade Média
-- [ ] Expandir cobertura do CSV com novas leis especiais e revisão periódica das molduras
-- [ ] Implementar Art. 70, § 2º (continuidade delitiva no concurso)
-- [ ] Adicionar exportação para PDF do relatório
-- [ ] Criar modo "tema escuro"
+- [ ] Substituir parser CSV simples por parser robusto com suporte a aspas e vírgulas internas.
+- [ ] Revisar progressão de regime contra a LEP vigente e fontes oficiais.
+- [ ] Expandir e auditar periodicamente `public/crimes.csv`.
+- [ ] Adicionar exportação PDF do relatório.
 
 ### Prioridade Baixa
-- [ ] Internacionalização (i18n) para espanhol/inglês
-- [ ] PWA (Progressive Web App) para uso offline
-- [ ] Histórico de cálculos salvos
+- [ ] Tema escuro.
+- [ ] PWA/offline.
+- [ ] Histórico de cálculos salvos.
+- [ ] Internacionalização.
 
 ## Como Buildar e Rodar
-
 ```bash
 # Instalar dependências
 npm install
 
-# Desenvolvimento (hot reload)
+# Desenvolvimento
 npm run dev
 
 # Build de produção
@@ -159,63 +161,33 @@ npm run build
 # Preview do build
 npm run preview
 
-# Type check (sem emit)
+# Type check sem emit
 npx tsc --noEmit
 ```
 
 ## Configurações Importantes
+- `tsconfig.json`: `strict: true`, `noImplicitAny: true`, `skipLibCheck: true`, `moduleResolution: "bundler"`.
+- `tailwind.config.js`: content em `index.html` e `src/**/*.{js,ts,jsx,tsx}`.
+- `vite.config.ts`: plugin React e base `"/"`.
 
-### tsconfig.json
-- `strict: true`
-- `noImplicitAny: true`
-- `skipLibCheck: true`
-- `moduleResolution: "bundler"`
+## Dados de Referência
+- Dias-multa: 10 a 360, conforme art. 49 do CP.
+- Valor do dia-multa: mínimo de 1/30 do salário mínimo e máximo de 5 vezes o salário mínimo.
+- Convenção temporal do app: 1 ano = 360 dias; 1 mês = 30 dias.
+- Prescrição abstrata: art. 109 do CP sobre pena máxima informada.
+- Prescrição concreta/retroativa: art. 109 e art. 110, § 1º, do CP sobre pena definitiva.
 
-### tailwind.config.js
-- Content: `index.html`, `src/**/*.{js,ts,jsx,tsx}`
-- Plugins: `forms`, `typography`
-- Custom colors: `penal` (azul escuro), `accent` (vermelho/alerta)
-
-### vite.config.ts
-- Plugin: `@vitejs/plugin-react`
-- Base: `"/"` (ajustar se deploy não for na raiz)
-
-## Dados de Referência (Valores Hardcoded)
-
-### Salário Mínimo
-- Valor atual: **R$ 1.412,00** (atualizar conforme decreto federal)
-- Fonte: Portaria MTP nº 11.216/2024
-
-### Frações de Multa
-- 1/30 do salário mínimo: R$ 47,07
-- 5/30 do salário mínimo: R$ 235,33
-- Dias-multa: 10 a 360 (Art. 49, CP)
-
-### Regras de Regime
-- **Primário, pena ≤ 4 anos, sem violência → Aberto** (Art. 33, § 2º)
-- **Reincidente específico ou hediondo → Fechado** (Art. 33, § 3º)
-- **Pena > 8 anos → Inicialmente fechado** (Art. 33, caput)
-
-### Progressão
-- **Regime fechado → semiaberto**: 1/6 da pena (reincidente) ou 1/5 (primário)
-- **Semiaberto → aberto**: 1/3 da pena (reincidente) ou 2/5 (primário)
-- **Regime aberto → livramento condicional**: 2/3 da pena (reincidente) ou 3/5 (primário)
-
-## Referências Doutrinárias
-- **Thales Taipina**: "Dosimetria da Pena e Execução Penal" (2025) — metodologia adotada
-- **Nota**: Outras referências (Sergio D’Antonio, Fernando Capez, etc.) foram removidas a pedido do usuário para manter consistência com Taipina.
-
-## Comando para atualizar estado
+## Comando para Atualizar Estado
 Este arquivo deve ser atualizado sempre que:
-1. Novas funcionalidades forem implementadas
-2. Bugs críticos forem descobertos ou corrigidos
-3. Decisões arquiteturais forem alteradas
-4. Novas dependências forem adicionadas
-5. Valores hardcoded (salário mínimo) forem atualizados
+- Novas funcionalidades forem implementadas.
+- Bugs jurídicos ou técnicos relevantes forem corrigidos.
+- Decisões arquiteturais forem alteradas.
+- A base `public/crimes.csv` for expandida ou corrigida.
+- Valores hardcoded ou referências legais forem atualizados.
 
 ## Nota para Próxima Agent
-- Nunca apague/modifique arquivos pré-existentes do projeto legado (regra do Reversa).
-- Sempre execute `npm run build` antes de considerar uma tarefa concluída.
-- Mantenha commits atômicos com mensagens descritivas em português.
-- Se precisar de contexto jurídico, consulte Taipina (2025) como referência primária.
-- Teste manualmente a dosimetria com casos conhecidos (ex: furto simples, primário, sem agravantes → regime aberto, pena-base = mínimo + 1 vetor).
+- Sempre execute `npm run build` antes de concluir alterações.
+- Antes de commit, conferir `git status`, `git diff` e `git log --oneline -10`.
+- Mantenha commits pequenos e descritivos em português.
+- Não reverta alterações de terceiros no worktree.
+- Ao alterar `public/crimes.csv`, lembre que o parser ainda não suporta vírgulas internas.
