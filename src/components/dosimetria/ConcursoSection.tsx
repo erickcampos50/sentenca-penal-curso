@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { Info } from "./InfoPill";
 import { fmt, calcConcurso } from "./utils";
-import type { ConcursoCrime } from "./types";
+import type { ConcursoCrime, Crime } from "./types";
 
-export default function ConcursoSection() {
+interface Props {
+  crimesList: Crime[];
+}
+
+export default function ConcursoSection({ crimesList }: Props) {
   const [crimes, setCrimes] = useState<ConcursoCrime[]>([]);
   let nextId = crimes.length > 0 ? Math.max(...crimes.map(c => c.id)) + 1 : 1;
 
   const addCrime = () => {
-    setCrimes(prev => [...prev, { id: nextId, nome: "", tipo: "reclusão", penaMin: "", penaMax: "", penaDef: "" }]);
+    setCrimes(prev => [...prev, { id: nextId, nome: "", tipo: "reclusão", penaMin: "", penaMax: "", penaDef: "", observacao: "" }]);
     nextId++;
   };
 
@@ -16,6 +20,22 @@ export default function ConcursoSection() {
 
   const updateCrime = (id: number, field: keyof ConcursoCrime, value: string) => {
     setCrimes(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
+  };
+
+  const handleCrimeSelect = (id: number, nome: string) => {
+    const crime = crimesList.find(c => c.nome === nome);
+    if (crime) {
+      setCrimes(prev => prev.map(c => c.id === id ? {
+        ...c,
+        nome: crime.nome,
+        tipo: crime.tipo,
+        penaMin: String(crime.pena_min),
+        penaMax: String(crime.pena_max),
+        observacao: crime.observacao,
+      } : c));
+    } else {
+      setCrimes(prev => prev.map(c => c.id === id ? { ...c, nome, observacao: "" } : c));
+    }
   };
 
   const resultado = calcConcurso(crimes);
@@ -29,11 +49,32 @@ export default function ConcursoSection() {
       <div className="space-y-3">
         {crimes.map((c) => (
           <div key={c.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+            <div className="mb-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Selecionar crime (auto-preenchimento)</label>
+              <select
+                value={c.nome}
+                onChange={e => handleCrimeSelect(c.id, e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none"
+              >
+                <option value="">-- Selecione um crime --</option>
+                {crimesList.map((crime, i) => (
+                  <option key={i} value={crime.nome}>{crime.nome}</option>
+                ))}
+                <option value="__outro__">Outro (digite manualmente)</option>
+              </select>
+              {c.observacao.trim() && (
+                <div className="mt-2">
+                  <Info color="yellow" title="Observação do crime selecionado">
+                    {c.observacao}
+                  </Info>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Crime / descrição</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Crime / descrição manual</label>
                 <input
-                  value={c.nome}
+                  value={c.nome === "__outro__" ? "" : c.nome}
                   onChange={e => updateCrime(c.id, "nome", e.target.value)}
                   className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
                   placeholder="Ex: Roubo art. 157"
@@ -106,15 +147,15 @@ export default function ConcursoSection() {
             <div className="bg-gray-800 rounded-lg p-2">
               <p className="text-gray-400">Concurso material (Art. 69 CP)</p>
               <p className="text-yellow-300 font-bold">{fmt(resultado.material)}</p>
-              <p className="text-gray-500">Soma das penas (teto: 30 anos)</p>
+              <p className="text-gray-500">Soma das penas unificada ao limite de 40 anos (Art. 75, CP)</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-2">
               <p className="text-gray-400">Concurso formal (Art. 70 CP)</p>
               <p className="text-yellow-300 font-bold">{fmt(resultado.formalMin)} a {fmt(resultado.formalMax)}</p>
-              <p className="text-gray-500">Pena mais grave + 1/6 a 2/3</p>
+              <p className="text-gray-500">Pena mais grave + 1/6 até metade</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-2">
-              <p className="text-gray-400">Concurso ideal (Art. 69, §1º CP)</p>
+              <p className="text-gray-400">Pena mais grave isolada (referência)</p>
               <p className="text-yellow-300 font-bold">{fmt(resultado.ideal)}</p>
               <p className="text-gray-500">Pena da infração mais grave</p>
             </div>

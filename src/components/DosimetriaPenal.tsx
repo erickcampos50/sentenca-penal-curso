@@ -44,7 +44,7 @@ export default function DosimetriaPenal() {
     periodosSuspensao: [],
     fugaDias: "",
   });
-  const [multa, setMulta] = useState<MultaConfig>({ diasMulta: "", valorDiaMulta: "" });
+  const [multa, setMulta] = useState<MultaConfig>({ diasMulta: "", valorDiaMulta: "", salarioMinimo: "", fracaoSalario: "" });
   const [crimesList, setCrimesList] = useState<Crime[]>([]);
   const [crimeSelecionado, setCrimeSelecionado] = useState("");
 
@@ -55,6 +55,8 @@ export default function DosimetriaPenal() {
       .then(text => setCrimesList(parseCrimeCSV(text)))
       .catch(() => setCrimesList([]));
   }, []);
+
+  const selectedCrime = crimesList.find(c => c.nome === crimeSelecionado);
 
   // Validação de inputs numéricos
   const minVal = parseFloat(penMin);
@@ -100,7 +102,12 @@ export default function DosimetriaPenal() {
   const penRem = Math.max(penDef - detAnos, 0);
 
   // Regime
-  const regimeData = hasData ? calcRegime(penDef, tipoNorm, reincNorm, hediondo, reincEspec, perSaltum) : { regime: "—", regiF: "" };
+  const penaParaRegime = detAnos > 0 ? penRem : penDef;
+  const regimeData = hasData
+    ? penaParaRegime > 0
+      ? calcRegime(penaParaRegime, tipoNorm, reincNorm, hediondo, reincEspec, perSaltum)
+      : { regime: "Pena integralmente detraída", regiF: "CPP, art. 387, § 2º — a prisão provisória, administrativa ou internação é computada para determinar o regime inicial." }
+    : { regime: "—", regiF: "" };
   const regime = regimeData.regime;
   const regiF = regimeData.regiF;
 
@@ -111,13 +118,13 @@ export default function DosimetriaPenal() {
   const subTxt = cabeSub
     ? "Cabe substituição por restritivas de direitos (art. 44, CP)"
     : subCondicional
-    ? "Substituição condicional (reincidente não específico — art. 44, § 3º, CP)"
+    ? "Substituição condicionada ao art. 44, § 3º, CP"
     : "Não cabe substituição";
 
   const subQuant = cabeSub
     ? penDef <= 1
-      ? "1 pena restritiva de direitos ou multa (art. 44, § 2º, I)"
-      : "2 penas restritivas de direitos ou 1 restritiva + multa (art. 44, § 2º, II)"
+      ? "multa ou 1 pena restritiva de direitos (art. 44, § 2º, CP)"
+      : "1 restritiva + multa ou 2 penas restritivas de direitos (art. 44, § 2º, CP)"
     : "";
 
   // Sursis
@@ -212,6 +219,13 @@ export default function DosimetriaPenal() {
                   <option key={i} value={c.nome}>{c.nome}</option>
                 ))}
               </select>
+              {selectedCrime?.observacao.trim() && (
+                <div className="mt-2">
+                  <Info color="yellow" title="Observação do crime selecionado">
+                    {selectedCrime.observacao}
+                  </Info>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -255,28 +269,28 @@ export default function DosimetriaPenal() {
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={tentativa} onChange={e => setTentativa(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span>Crime tentado (art. 14, II, CP)</span>
+                <span>Crime tentado (art. 14, II e parágrafo único, CP)</span>
               </label>
               {tentativa && (
                 <div className="ml-5">
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Redução da pena (quanto mais próximo da consumação, menor a redução)</label>
                   <select value={tentativaFrac} onChange={e => setTentativaFrac(e.target.value)}
                     className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:border-blue-400">
-                    <option value="1/2">1/2 — iter criminis muito distante da consumação</option>
-                    <option value="1/3">1/3 — iter criminis intermediário</option>
-                    <option value="1/6">1/6 — iter criminis muito próximo da consumação</option>
+                    <option value="2/3">2/3 — iter criminis muito distante da consumação</option>
+                    <option value="1/2">1/2 — iter criminis intermediário</option>
+                    <option value="1/3">1/3 — iter criminis próximo da consumação</option>
                   </select>
                 </div>
               )}
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={hediondo} onChange={e => setHediondo(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span>Crime hediondo com resultado morte ou lesão grave (Lei 13.964/2019)</span>
+                <span>Crime hediondo/equiparado (impacta progressão por legislação especial)</span>
               </label>
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={reincEspec} onChange={e => setReincEspec(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span>Reincidente específico em crime doloso (Art. 33, § 3º c/c Lei 13.964/2019)</span>
+                <span>Reincidente específico em crime doloso (relevante para substituição/progressão)</span>
               </label>
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={perSaltum} onChange={e => setPerSaltum(e.target.checked)}
@@ -425,26 +439,44 @@ export default function DosimetriaPenal() {
                 <li>• Na 3ª fase, a pena <strong>pode ultrapassar o máximo</strong> ou ficar <strong>abaixo do mínimo</strong> legal.</li>
                 <li>• Ordem: aplica-se primeiro as minorantes, depois as majorantes.</li>
                 <li>• <strong>Art. 68, parágrafo único:</strong> no concurso de causas de aumento da Parte Especial, o juiz pode limitar-se a um só aumento.</li>
-                <li>• <strong>Tentativa (art. 14, II):</strong> redução de 1/3 a 2/3 conforme iter criminis percorrido — quanto mais próximo da consumação, menor a redução.</li>
+                <li>• <strong>Tentativa (art. 14, parágrafo único):</strong> redução de 1/3 a 2/3 conforme iter criminis percorrido — quanto mais próximo da consumação, menor a redução.</li>
               </ul>
             </Info>
             <div className="mb-4">
               <p className="text-xs font-bold text-red-600 mb-2">Causas de Aumento (Majorantes)</p>
               {majors.map((m, i) => (
-                <div key={i} className="flex gap-2 mb-2 items-center">
-                  <select value={m.desc} onChange={e => updRow(setMajors, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                    <option value="">-- selecione a majorante --</option>
-                    {MAJORANTES_LIST.map(ma => (
-                      <option key={ma.code+ma.desc} value={`${ma.code}: ${ma.desc}`}>{ma.code}: {ma.desc}</option>
-                    ))}
-                    <option value="Outra">Outra (digite manualmente)</option>
-                  </select>
-                  <select value={m.frac} onChange={e => updRow(setMajors, i, "frac", e.target.value)}
-                    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
-                    {FRACS.map(f => <option key={f}>{f}</option>)}
-                  </select>
-                  <button onClick={() => remRow(setMajors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                <div key={i}>
+                  <div className="flex gap-2 mb-1 items-center">
+                    <select value={m.desc.startsWith("Outra:") ? "Outra" : m.desc} onChange={e => {
+                      const val = e.target.value;
+                      if (val === "Outra") {
+                        updRow(setMajors, i, "desc", "Outra: ");
+                      } else {
+                        updRow(setMajors, i, "desc", val);
+                      }
+                    }}
+                      className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                      <option value="">-- selecione a majorante --</option>
+                      {MAJORANTES_LIST.map(ma => (
+                        <option key={ma.code+ma.desc} value={`${ma.code}: ${ma.desc}`}>{ma.code}: {ma.desc}</option>
+                      ))}
+                      <option value="Outra">Outra (digite manualmente)</option>
+                    </select>
+                    <select value={m.frac} onChange={e => updRow(setMajors, i, "frac", e.target.value)}
+                      className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                      {FRACS.map(f => <option key={f}>{f}</option>)}
+                    </select>
+                    <button onClick={() => remRow(setMajors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                  </div>
+                  {m.desc.startsWith("Outra:") && (
+                    <input
+                      type="text"
+                      value={m.desc.replace("Outra: ", "")}
+                      onChange={e => updRow(setMajors, i, "desc", "Outra: " + e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none mb-2"
+                      placeholder="Digite a causa de aumento (ex: Art. 157, § 2º-A — emprego de arma de fogo)"
+                    />
+                  )}
                 </div>
               ))}
               <button onClick={() => addRow(setMajors)} className="text-xs text-blue-500 hover:underline">+ Adicionar majorante</button>
@@ -452,20 +484,38 @@ export default function DosimetriaPenal() {
             <div>
               <p className="text-xs font-bold text-green-600 mb-2">Causas de Diminuição (Minorantes)</p>
               {minors.map((m, i) => (
-                <div key={i} className="flex gap-2 mb-2 items-center">
-                  <select value={m.desc} onChange={e => updRow(setMinors, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                    <option value="">-- selecione a minorante --</option>
-                    {MINORANTES_LIST.map(mi => (
-                      <option key={mi.code+mi.desc} value={`${mi.code}: ${mi.desc}`}>{mi.code}: {mi.desc}</option>
-                    ))}
-                    <option value="Outra">Outra (digite manualmente)</option>
-                  </select>
-                  <select value={m.frac} onChange={e => updRow(setMinors, i, "frac", e.target.value)}
-                    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
-                    {FRACS.map(f => <option key={f}>{f}</option>)}
-                  </select>
-                  <button onClick={() => remRow(setMinors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                <div key={i}>
+                  <div className="flex gap-2 mb-1 items-center">
+                    <select value={m.desc.startsWith("Outra:") ? "Outra" : m.desc} onChange={e => {
+                      const val = e.target.value;
+                      if (val === "Outra") {
+                        updRow(setMinors, i, "desc", "Outra: ");
+                      } else {
+                        updRow(setMinors, i, "desc", val);
+                      }
+                    }}
+                      className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                      <option value="">-- selecione a minorante --</option>
+                      {MINORANTES_LIST.map(mi => (
+                        <option key={mi.code+mi.desc} value={`${mi.code}: ${mi.desc}`}>{mi.code}: {mi.desc}</option>
+                      ))}
+                      <option value="Outra">Outra (digite manualmente)</option>
+                    </select>
+                    <select value={m.frac} onChange={e => updRow(setMinors, i, "frac", e.target.value)}
+                      className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                      {FRACS.map(f => <option key={f}>{f}</option>)}
+                    </select>
+                    <button onClick={() => remRow(setMinors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                  </div>
+                  {m.desc.startsWith("Outra:") && (
+                    <input
+                      type="text"
+                      value={m.desc.replace("Outra: ", "")}
+                      onChange={e => updRow(setMinors, i, "desc", "Outra: " + e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none mb-2"
+                      placeholder="Digite a causa de diminuição (ex: Tentativa — art. 14, parágrafo único, CP)"
+                    />
+                  )}
                 </div>
               ))}
               <button onClick={() => addRow(setMinors)} className="text-xs text-blue-500 hover:underline">+ Adicionar minorante</button>
@@ -540,7 +590,7 @@ export default function DosimetriaPenal() {
       )}
 
       {/* ========== CONCURSO ========== */}
-      {tab === "concurso" && <ConcursoSection />}
+      {tab === "concurso" && <ConcursoSection crimesList={crimesList} />}
 
       {/* ========== REFERÊNCIAS LEGAIS ========== */}
       {tab === "refs" && (
@@ -553,26 +603,26 @@ export default function DosimetriaPenal() {
             { t: "Arts. 61–62, CP — Circunstâncias Agravantes (2ª Fase)",
               c: "Art. 61. São circunstâncias que sempre agravam a pena:\nI – a reincidência;\nII – ter o agente cometido o crime: a) por motivo torpe; b) por motivo fútil; c) para facilitar ou assegurar execução, ocultação, impunidade ou vantagem de outro crime; d) à traição, de emboscada, ou mediante dissimulação; e) com emprego de veneno, fogo, explosivo, tortura ou meio cruel; f) contra ascendente, descendente, irmão ou cônjuge; g) com abuso de autoridade, relação doméstica, coabitação ou hospitalidade; h) com abuso de poder ou violação de dever; i) contra criança, maior de 60 anos, enfermo ou mulher grávida; j) quando o ofendido estava sob proteção da autoridade; l) em ocasião de calamidade pública; m) em estado de embriaguez preordenada.\n\nArt. 62. Agravam-se ainda a pena do agente que: I) promoveu ou organizou a cooperação; II) coagiu ou induziu outrem; III) instigou a cometer o crime; IV) executou mediante paga." },
             { t: "Arts. 65–66, CP — Circunstâncias Atenuantes (2ª Fase)",
-              c: "Art. 65. São circunstâncias que sempre atenuam a pena:\nI – ser o agente menor de 21 anos na data do fato, ou maior de 70 na sentença;\nII – o desconhecimento da lei;\nIII – ter o agente: a) cometido o crime por motivo de relevante valor social ou moral; b) procurado, por sua espontânea vontade, com eficiência, evitar ou minorar as consequências do crime, ou ter, antes do julgamento, reparado o dano; c) cometido o crime sob coação resistível ou em cumprimento de ordem de autoridade superior; d) confessado espontaneamente a autoria do crime perante a autoridade; e) cometido o crime sob a influência de multidão em tumulto.\n\nArt. 66. A pena poderá ser ainda atenuada em razão de qualquer outra circunstância relevante, anterior ou posterior ao crime, embora não prevista expressamente em lei." },
+              c: "Art. 65. São circunstâncias que sempre atenuam a pena:\nI – ser o agente menor de 21 anos na data do fato, ou maior de 70 na sentença, salvo se o crime envolver violência sexual contra a mulher;\nII – o desconhecimento da lei;\nIII – ter o agente: a) cometido o crime por motivo de relevante valor social ou moral; b) procurado, por sua espontânea vontade, com eficiência, evitar ou minorar as consequências do crime, ou ter, antes do julgamento, reparado o dano; c) cometido o crime sob coação resistível, em cumprimento de ordem de autoridade superior, ou sob influência de violenta emoção provocada por ato injusto da vítima; d) confessado espontaneamente a autoria do crime perante a autoridade; e) cometido o crime sob a influência de multidão em tumulto, se não o provocou.\n\nArt. 66. A pena poderá ser ainda atenuada em razão de qualquer outra circunstância relevante, anterior ou posterior ao crime, embora não prevista expressamente em lei." },
             { t: "Art. 67, CP — Concurso de Agravantes e Atenuantes",
               c: "No concurso de agravantes e atenuantes, a pena deve aproximar-se do limite indicado pelas circunstâncias preponderantes, entendendo-se como tais as que resultam dos motivos determinantes do crime, da personalidade do agente e da reincidência." },
             { t: "Art. 33, CP — Regimes de Cumprimento",
               c: "A pena de reclusão deve ser cumprida em regime fechado, semiaberto ou aberto. A de detenção, em regime semiaberto ou aberto, salvo necessidade de transferência a regime fechado.\n\n§ 2º – Critérios:\na) pena > 8 anos → regime fechado obrigatório;\nb) não reincidente, pena 4–8 anos → pode iniciar em semiaberto;\nc) não reincidente, pena ≤ 4 anos → pode iniciar em aberto.\n\n§ 3º – A determinação do regime inicial far-se-á com observância dos critérios do art. 59 (circunstâncias judiciais)." },
             { t: "Art. 44, CP — Substituição por Restritivas de Direitos",
-              c: "Requisitos cumulativos:\nI – pena ≤ 4 anos e crime sem violência ou grave ameaça (ou qualquer pena se culposo);\nII – réu não reincidente em crime doloso;\nIII – culpabilidade, antecedentes, conduta social, personalidade, motivos e circunstâncias indiquem suficiência.\n\n§ 2º: pena ≤ 1 ano → 1 restritiva ou multa; pena > 1 ano → 2 restritivas ou 1 restritiva + multa.\n§ 3º: Reincidente pode ser substituído se socialmente recomendável e reincidência não específica.\n\nEspécies (art. 43): prestação pecuniária, perda de bens, prestação de serviços, interdição temporária de direitos, limitação de fim de semana." },
+              c: "Requisitos cumulativos:\nI – pena ≤ 4 anos e crime sem violência ou grave ameaça (ou qualquer pena se culposo);\nII – réu não reincidente em crime doloso;\nIII – culpabilidade, antecedentes, conduta social, personalidade, motivos e circunstâncias indiquem suficiência.\n\n§ 2º: pena ≤ 1 ano → multa ou uma restritiva; pena > 1 ano → uma restritiva + multa ou duas restritivas.\n§ 3º: Reincidente pode ser substituído se socialmente recomendável e a reincidência não ocorreu pela prática do mesmo crime.\n\nEspécies (art. 43): prestação pecuniária, perda de bens e valores, limitação de fim de semana, prestação de serviço à comunidade ou entidades públicas, interdição temporária de direitos." },
             { t: "Art. 77, CP — Sursis (Suspensão Condicional da Pena)",
               c: "A execução da pena privativa de liberdade não superior a 2 anos poderá ser suspensa por 2 a 4 anos.\nRequisitos: não reincidente em crime doloso; circunstâncias do art. 59 indiquem suficiência.\n\nSursis etário (§ 2º): pena ≤ 4 anos → condenado maior de 70 anos.\nSursis humanitário (§ 2º): pena ≤ 4 anos → razões de saúde." },
             { t: "Art. 42, CP — Detração Penal",
               c: "Computam-se, na pena privativa de liberdade e na medida de segurança, o tempo de prisão provisória, no Brasil ou no estrangeiro, o de prisão administrativa e o de internação em qualquer dos estabelecimentos referidos no artigo anterior." },
             { t: "Art. 98, CP — Medida de Segurança",
-              c: "Quando o agente for, por qualquer causa, isento de pena, pode ser-lhe aplicada medida de segurança, desde que haja periculosidade.\n\nA medida de segurança de internação não excederá a 3 anos, podendo ser renovada por igual período, se a periculosidade persistir." },
-            { t: "Art. 76, CP — Multa",
-              c: "A multa é a quantia fixada em dias-multa, correspondendo cada dia-multa a 1/30 do salário mínimo vigente ao tempo da sentença.\n\n§ 1º: O número de dias-multa não será inferior a 10 nem superior a 360.\n§ 2º: O valor do dia-multa não será inferior a 1/30 nem superior a 5/30 do salário mínimo." },
+              c: "Na hipótese do parágrafo único do art. 26 e necessitando o condenado de especial tratamento curativo, a pena privativa de liberdade pode ser substituída por internação ou tratamento ambulatorial, pelo prazo mínimo de 1 a 3 anos." },
+            { t: "Art. 49, CP — Multa",
+              c: "A pena de multa consiste no pagamento ao fundo penitenciário da quantia fixada na sentença e calculada em dias-multa.\n\nCaput: mínimo de 10 e máximo de 360 dias-multa.\n§ 1º: o valor do dia-multa não pode ser inferior a 1/30 do maior salário mínimo mensal vigente ao tempo do fato, nem superior a 5 vezes esse salário.\n§ 2º: o valor da multa será atualizado, quando da execução, pelos índices de correção monetária." },
             { t: "Art. 112, LEP — Progressão de Regime",
-              c: "A progressão de regime obedece aos seguintes marcos:\nI – reclusão > 8 anos: 5/6 (exceto hediondo: 2/5 primário, 3/5 reincidente);\nII – reclusão 4–8 anos: 3/5;\nIII – reclusão < 4 anos: 1/2;\nIV – detenção: 1/3.\n\nReincidente em crime doloso: 1/4 da pena." },
+              c: "Regra de execução penal fora dos arquivos CP/CPP de referência. Use esta seção como estimativa e confira a Lei de Execução Penal vigente antes de usar em peça ou sentença." },
             { t: "Art. 109, CP — Prescrição da Pretensão Punitiva",
-              c: "A prescrição regula-se pelo máximo da pena privativa de liberdade cominada ao crime:\nI – 20 anos, se o máximo > 12 anos;\nII – 16 anos, se > 8 até 12 anos;\nIII – 12 anos, se > 4 até 8 anos;\nIV – 8 anos, se > 2 até 4 anos;\nV – 4 anos, se 1 a 2 anos;\nVI – 3 anos, se < 1 ano.\n\nArt. 115, CP: redução à metade para réu menor de 21 anos na data do fato ou maior de 70 na sentença.\nArt. 110, § 1º: prescrição retroativa regula-se pela pena concreta." },
-            { t: "Art. 14, II, CP — Tentativa",
+              c: "A prescrição regula-se pelo máximo da pena privativa de liberdade cominada ao crime:\nI – 20 anos, se o máximo > 12 anos;\nII – 16 anos, se > 8 até 12 anos;\nIII – 12 anos, se > 4 até 8 anos;\nIV – 8 anos, se > 2 até 4 anos;\nV – 4 anos, se igual a 1 ano ou, sendo superior, não excede 2 anos;\nVI – 3 anos, se < 1 ano.\n\nArt. 115, CP: redução à metade para réu menor de 21 anos ao tempo do crime ou maior de 70 na sentença, salvo violência sexual contra a mulher.\nArt. 110, § 1º: prescrição retroativa regula-se pela pena aplicada." },
+            { t: "Art. 14, II e parágrafo único, CP — Tentativa",
               c: "Diz-se o crime:\nII – tentado, quando iniciada a execução, não se consuma por circunstâncias alheias à vontade do agente.\n\nParágrafo único: Pune-se a tentativa com a pena correspondente ao crime consumado, diminuída de 1/3 a 2/3.\n\nCritério: quanto mais próximo da consumação, menor a fração de redução. Quanto mais distante, maior a redução." },
           ].map((r,i) => (
             <div key={i} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
@@ -596,7 +646,7 @@ export default function DosimetriaPenal() {
               <tbody>
                 {[
                   ["Até 4 anos", "Aberto", "Semiaberto*", "Aberto"],
-                  ["4 a 8 anos", "Semiaberto", "Fechado*", "Semiaberto"],
+                  ["4 a 8 anos", "Semiaberto", "Semiaberto/Fechado*", "Semiaberto"],
                   ["Acima de 8 anos", "Fechado", "Fechado", "Semiaberto**"],
                 ].map(([p, pr, re, det], i) => (
                   <tr key={i} className={i%2===0?"":"bg-gray-50"}>
@@ -632,7 +682,7 @@ export default function DosimetriaPenal() {
                 ))}
               </tbody>
             </table>
-            <p className="text-xs text-gray-500 mt-2">Art. 115: redução à metade se o réu era menor de 21 anos na data do fato ou maior de 70 na data da sentença condenatória.</p>
+            <p className="text-xs text-gray-500 mt-2">Art. 115: redução à metade se o réu era menor de 21 anos ao tempo do crime ou maior de 70 na sentença, salvo violência sexual contra a mulher.</p>
           </div>
         </div>
       )}
@@ -722,12 +772,12 @@ export default function DosimetriaPenal() {
                 <div className="bg-gray-50 rounded p-3 font-mono text-xs text-gray-700 space-y-1.5">
                   <p><strong>1ª fase (pena-base):</strong> min + (N_neg x intervalo ÷ 8)</p>
                   <p><strong>Agravante:</strong> penBase x fração</p>
-                  <p><strong>Atenuante:</strong> penBase x fração → resultado ≥ mínimo e ≤ máximo legal (Súm. 231/STJ; Art. 68, § 2º, CP)</p>
+                  <p><strong>Atenuante:</strong> penBase x fração → resultado ≥ mínimo e ≤ máximo legal (Súm. 231/STJ)</p>
                   <p><strong>2ª fase (pena intermediária):</strong> penBase + Σagravantes − Σatenuantes → limitada ao intervalo legal</p>
                   <p><strong>Minorante:</strong> penAnterior x (1 − fração)</p>
                   <p><strong>Majorante:</strong> penAnterior x (1 + fração)</p>
                   <p><strong>3ª fase (pena definitiva):</strong> após todas as causas (pode sair da moldura)</p>
-                  <p><strong>Tentativa (art. 14, II):</strong> minorante automática conforme iter criminis</p>
+                  <p><strong>Tentativa (art. 14, parágrafo único):</strong> minorante automática conforme iter criminis</p>
                   <p><strong>Detração:</strong> penDef − (meses ÷ 12)</p>
                   <p><strong>Prescrição abstrata:</strong> tabela art. 109 sobre pena máxima do tipo penal (usada a moldura inserida)</p>
                   <p><strong>Prescrição concreta:</strong> tabela art. 109 sobre pena definitiva aplicada</p>

@@ -157,7 +157,7 @@ export default function PrescricaoDetracao({
               onChange={e => setPresc(p => ({ ...p, reducaoMetade: e.target.checked }))}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <span>Aplicar redução pela metade (art. 115 CP) — menor de 21 no fato ou maior de 70 na sentença</span>
+            <span>Aplicar redução pela metade (art. 115 CP) — menor de 21 ao tempo do crime ou maior de 70 na sentença, salvo violência sexual contra a mulher</span>
           </label>
           <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
             <input

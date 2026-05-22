@@ -54,7 +54,10 @@ export default function ResultadoFinal(props: Props) {
   const atSum = atAtivos.reduce((s, a) => s + penBase * FV[a.frac], 0);
 
   const diasMulta = parseFloat(multa.diasMulta) || 0;
-  const valorDia = parseFloat(multa.valorDiaMulta) || 0;
+  const valorDiaManual = parseFloat(multa.valorDiaMulta) || 0;
+  const salarioMinimo = parseFloat(multa.salarioMinimo) || 0;
+  const fracaoSalario = parseFloat(multa.fracaoSalario) || 0;
+  const valorDia = valorDiaManual > 0 ? valorDiaManual : salarioMinimo * fracaoSalario;
   const multaTotal = diasMulta * valorDia;
   const multaFormatted = multaTotal > 0
     ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(multaTotal)
@@ -65,13 +68,13 @@ export default function ResultadoFinal(props: Props) {
   const subTxt = cabeSub
     ? "Cabe substituição por restritivas de direitos (art. 44, CP)"
     : subCondicional
-    ? "Substituição condicional (reincidente não específico — art. 44, § 3º, CP)"
+    ? "Substituição condicionada ao art. 44, § 3º, CP"
     : "Não cabe substituição";
 
   const subQuant = cabeSub
     ? penDef <= 1
-      ? "1 pena restritiva de direitos ou multa (art. 44, § 2º, I)"
-      : "2 penas restritivas de direitos ou 1 restritiva + multa (art. 44, § 2º, II)"
+      ? "multa ou 1 pena restritiva de direitos (art. 44, § 2º, CP)"
+      : "1 restritiva + multa ou 2 penas restritivas de direitos (art. 44, § 2º, CP)"
     : "";
 
   const relatorio = generateRelatorio(
@@ -158,7 +161,7 @@ export default function ResultadoFinal(props: Props) {
         {/* Multa */}
         {multaTotal > 0 && (
           <div className="bg-gray-800 rounded-lg p-2 mt-2">
-            <p className="text-gray-400 text-xs">Multa (Art. 76, CP)</p>
+            <p className="text-gray-400 text-xs">Multa (Art. 49, CP)</p>
             <p className="text-yellow-300 font-bold text-sm">{multaFormatted}</p>
             <p className="text-gray-500 text-xs">{diasMulta} dias-multa x {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorDia)}</p>
           </div>

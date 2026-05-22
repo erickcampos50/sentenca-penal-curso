@@ -34,6 +34,7 @@ export interface ConcursoCrime {
   penaMin: string;
   penaMax: string;
   penaDef: string;
+  observacao: string;
 }
 
 export interface PrescricaoConfig {
@@ -54,6 +55,8 @@ export interface MedidaSeguranca {
 export interface MultaConfig {
   diasMulta: string;
   valorDiaMulta: string;
+  salarioMinimo: string;
+  fracaoSalario: string;
 }
 
 export interface VetorInfo {
