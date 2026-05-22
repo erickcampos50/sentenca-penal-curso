@@ -188,73 +188,78 @@ export default function DosimetriaPenal() {
   const [detMeses, setDetMeses] = useState("");
   const [openV, setOpenV] = useState<number | null>(null);
 
-  const min = parseFloat(penMin) || 0;
-  const max = parseFloat(penMax) || 0;
+  // Validação de inputs numéricos
+  const minVal = parseFloat(penMin);
+  const maxVal = parseFloat(penMax);
+  const isValidMin = !isNaN(minVal) && minVal >= 0;
+  const isValidMax = !isNaN(maxVal) && maxVal >= 0 && maxVal >= minVal;
+  const min = isValidMin ? minVal : 0;
+  const max = isValidMax ? maxVal : 0;
   const intv = Math.max(max - min, 0);
-  const hasData = min > 0 && max > 0;
+  const hasData = isValidMin && isValidMax && min > 0 && max > 0;
+
+  // Normalização de campos categóricos
+  const tipoNorm = tipo.trim().toLowerCase();
+  const reincNorm = reincidente.trim().toLowerCase() === "sim";
+  const violNorm = violencia.trim().toLowerCase() === "sim";
 
   // Fase 1
   const negN = classi.filter(c => c === "desfavoravel").length;
   const acPorVetor = (negN > 0 && intv > 0) ? intv / 8 : 0;
   const penBase = hasData ? Math.min(min + negN * acPorVetor, max) : 0;
 
-  // Fase 2
-  const agAtivos = agravs.filter(a => a.desc?.trim());
-  const atAtivos = atens.filter(a => a.desc?.trim());
+  // Fase 2 — com validação de frações e teto no máximo legal (Art. 68, § 2º, CP)
+  const agAtivos = agravs.filter(a => a.desc?.trim() && a.frac in FV);
+  const atAtivos = atens.filter(a => a.desc?.trim() && a.frac in FV);
   let agSum = 0, atSum = 0;
   agAtivos.forEach(a => { agSum += penBase * FV[a.frac]; });
   atAtivos.forEach(a => { atSum += penBase * FV[a.frac]; });
-  const penInter = hasData ? Math.max(penBase + agSum - atSum, min) : 0;
+  const penInter = hasData ? Math.min(Math.max(penBase + agSum - atSum, min), max) : 0;
 
-  // Fase 3
+  // Fase 3 — com validação de frações
   let penDef = penInter;
-  const minAtivos = minors.filter(m => m.desc?.trim());
-  const majAtivos = majors.filter(m => m.desc?.trim());
+  const minAtivos = minors.filter(m => m.desc?.trim() && m.frac in FV);
+  const majAtivos = majors.filter(m => m.desc?.trim() && m.frac in FV);
   minAtivos.forEach(m => { penDef = penDef * (1 - FV[m.frac]); });
   majAtivos.forEach(m => { penDef = penDef * (1 + FV[m.frac]); });
   penDef = Math.max(penDef, 0);
 
-  // Detração
-  const detAnos = (parseFloat(detMeses) || 0) / 12;
+  // Detração — com validação de não-negatividade
+  const detMesesNum = parseFloat(detMeses);
+  const detAnos = !isNaN(detMesesNum) && detMesesNum >= 0 ? detMesesNum / 12 : 0;
   const penRem = Math.max(penDef - detAnos, 0);
 
-  // Regime
+  // Regime — com tratamento de prisão simples (Art. 34, CP)
   let regime: string = "—", regiF = "";
   if (hasData) {
-    if (tipo === "detenção") {
+    if (tipoNorm === "prisão simples") {
+      regime = "Aberto";
+      regiF = "Art. 34, CP — prisão simples admite apenas regime aberto.";
+    } else if (tipoNorm === "detenção") {
       regime = penDef <= 4 ? "Aberto" : "Semiaberto";
       regiF = "Art. 33, caput — detenção não admite regime fechado inicial.";
     } else if (penDef > 8) {
       regime = "Fechado"; regiF = "Art. 33, § 2º, a — pena > 8 anos → fechado obrigatório.";
     } else if (penDef > 4) {
-      regime = reincidente === "sim" ? "Fechado" : "Semiaberto";
-      regiF = reincidente === "sim"
+      regime = reincNorm ? "Fechado" : "Semiaberto";
+      regiF = reincNorm
         ? "Art. 33, § 2º, b c/c § 3º. Reincidente pode ter regime agravado. Súm. 269/STJ: semiaberto cabível se favoráveis as circunstâncias."
         : "Art. 33, § 2º, b — pena 4–8 anos, réu primário → semiaberto.";
     } else {
-      regime = reincidente === "sim" ? "Semiaberto" : "Aberto";
-      regiF = reincidente === "sim"
+      regime = reincNorm ? "Semiaberto" : "Aberto";
+      regiF = reincNorm
         ? "Art. 33, § 2º, c c/c § 3º — reincidente não inicia em aberto. Súm. 269/STJ: semiaberto se favoráveis as circunstâncias judiciais."
         : "Art. 33, § 2º, c — pena ≤ 4 anos, réu primário → aberto.";
     }
   }
 
   // Substituição
-  const cabeSub = penDef > 0 && penDef <= 4 && violencia === "nao" && reincidente === "nao";
-  const subCondicional = penDef > 0 && penDef <= 4 && violencia === "nao" && reincidente === "sim";
-  let subTxt = "—", subQuant = "";
-  if (cabeSub) {
-    subTxt = "✓ Cabível (art. 44, I, II e III)";
-    subQuant = penDef <= 1 ? "1 restritiva ou multa (§ 2º)" : "2 restritivas ou 1 restritiva + multa (§ 2º)";
-  } else if (subCondicional) {
-    subTxt = "⚠ Possível — reincidente não específico (art. 44, § 3º)";
-    subQuant = penDef <= 1 ? "1 restritiva ou multa (§ 2º)" : "2 restritivas ou 1 restritiva + multa (§ 2º)";
-  } else if (penDef > 4) subTxt = "✕ Não cabível — pena > 4 anos (art. 44, I)";
-  else if (violencia === "sim") subTxt = "✕ Não cabível — violência ou grave ameaça (art. 44, I)";
+  const cabeSub = penDef > 0 && penDef <= 4 && !violNorm && !reincNorm;
+  const subCondicional = penDef > 0 && penDef <= 4 && !violNorm && reincNorm;
 
   // Sursis
-  const sursis = penDef > 0 && penDef <= 2 && reincidente === "nao";
-  const sursisEt = penDef > 0 && penDef <= 4 && reincidente === "nao";
+  const sursis = penDef > 0 && penDef <= 2 && !reincNorm;
+  const sursisEt = penDef > 0 && penDef <= 4 && !reincNorm;
 
   // Prescrição
   const prescAbst = max > 0 ? prescPrazo(max) : null;
