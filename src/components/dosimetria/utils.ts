@@ -298,22 +298,25 @@ export function generateRelatorio(
   lines.push(`  • Sursis:           ${sursis ? "cabível" : sursisEt ? "verificar etário/humanitário" : "não cabível"}`);
   lines.push("");
   lines.push("COMO FUNCIONA A DOSIMETRIA?");
-  lines.push("  O sistema trifásico divide o cálculo da pena em três etapas:");
+  lines.push("  Antes das fases, define-se a moldura penal aplicável ao tipo.");
+  lines.push("  O sistema trifásico divide o cálculo da pena em três fases:");
   lines.push("  1ª FASE: pena-base (Art. 59) — partindo do mínimo, sobe conforme");
   lines.push("           vetores desfavoráveis (máx. 1/8 do intervalo cada);");
   lines.push("  2ª FASE: agravantes e atenuantes (Arts. 61-66) — acrescem ou");
   lines.push("           reduzem sobre a pena-base, limitados ao mínimo/máximo;");
   lines.push("  3ª FASE: majorantes e minorantes (Art. 68) — podem extrapolar");
   lines.push("           o máximo ou ficar abaixo do mínimo.");
+  lines.push("  Depois vêm efeitos pós-dosimetria, como detração, regime, sursis,");
+  lines.push("  substituição, prescrição, multa e concurso de crimes.");
   lines.push("");
   lines.push("  ⚠️ IMPORTANTE: este aplicativo adota método QUANTITATIVO. A");
   lines.push("     valoração QUALITATIVA (peso diferenciado por intensidade)");
   lines.push("     é responsabilidade do juiz e não pode ser automatizada.");
   lines.push("");
 
-  // 1. Moldura
+  // Moldura preliminar
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 1. MOLDURA PENAL                                            │");
+  lines.push("│ ETAPA PRELIMINAR — MOLDURA PENAL                            │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   • Pena mínima:  ${fmt(min)}`);
   lines.push(`   • Pena máxima:  ${fmt(max)}`);
@@ -321,14 +324,11 @@ export function generateRelatorio(
   lines.push(`   • Tipo penal:   ${tipoNorm}`);
   lines.push(`   • Reincidente:  ${reincNorm ? "Sim" : "Não (primário)"}`);
   lines.push(`   • Hediondo:     ${hediondo ? "Sim" : "Não"}`);
-  if (tentativa) {
-    lines.push(`   • Tentativa:    Sim (redução de ${tentativaFrac})`);
-  }
   lines.push("");
 
-  // 2. Fase 1
+  // 1. Fase 1
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 2. PRIMEIRA FASE — PENA-BASE (Art. 59, CP)                  │");
+  lines.push("│ 1. PRIMEIRA FASE — PENA-BASE (Art. 59, CP)                  │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   Fórmula: min + (N_negativos × intervalo ÷ 8)`);
   lines.push(`   Cálculo: ${fmt(min)} + (${negN} × ${fmt((max - min) / 8)}) = ${fmt(penBase)}`);
@@ -344,9 +344,9 @@ export function generateRelatorio(
   lines.push(`   RESULTADO → Pena-base: ${fmt(penBase)}`);
   lines.push("");
 
-  // 3. Fase 2
+  // 2. Fase 2
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 3. SEGUNDA FASE — AGRAVANTES E ATENUANTES (Arts. 61-66)     │");
+  lines.push("│ 2. SEGUNDA FASE — AGRAVANTES E ATENUANTES (Arts. 61-66)     │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   Base de cálculo: pena-base = ${fmt(penBase)}`);
   const agAtivos = agravs.filter(a => a.desc?.trim() && a.frac in FV);
@@ -369,12 +369,12 @@ export function generateRelatorio(
   lines.push(`   RESULTADO → Pena intermediária: ${fmt(penInter)}`);
   lines.push("");
 
-  // 4. Fase 3
+  // 3. Fase 3
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 4. TERCEIRA FASE — CAUSAS DE AUMENTO E DIMINUIÇÃO (Art. 68) │");
+  lines.push("│ 3. TERCEIRA FASE — CAUSAS DE AUMENTO E DIMINUIÇÃO (Art. 68) │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
-  lines.push("   Ordem: primeiro minorantes, depois majorantes.");
-  lines.push("   (nesta fase a pena pode ultrapassar o máximo legal)");
+  lines.push("   Ordem adotada: primeiro minorantes, incluindo tentativa, depois majorantes.");
+  lines.push("   (nesta fase a pena pode ultrapassar o máximo ou ficar abaixo do mínimo legal)");
   const majAtivos = majors.filter(m => m.desc?.trim() && m.frac in FV);
   const minAtivos = minors.filter(m => m.desc?.trim() && m.frac in FV);
   if (minAtivos.length) {
@@ -382,6 +382,9 @@ export function generateRelatorio(
     minAtivos.forEach(m => lines.push(`     × ${m.desc} — ${m.frac} (pena × ${(1 - FV[m.frac]).toFixed(4)})`));
   } else {
     lines.push("   Minorantes: nenhuma aplicada.");
+  }
+  if (tentativa && tentativaFrac in FV) {
+    lines.push(`   Tentativa (art. 14, parágrafo único, CP): redução de ${tentativaFrac} (pena × ${(1 - FV[tentativaFrac]).toFixed(4)})`);
   }
   if (majAtivos.length) {
     lines.push("   Majorantes (aumentam a pena):");
@@ -394,11 +397,15 @@ export function generateRelatorio(
     lines.push(`   ⚠️ Atenção: pena definitiva (${fmt(penDef)}) ultrapassa o máximo legal (${fmt(max)}).`);
     lines.push(`      Isso é permitido na 3ª fase quando há majorantes específicas.`);
   }
+  if (penDef > 0 && penDef < min) {
+    lines.push(`   ⚠️ Atenção: pena definitiva (${fmt(penDef)}) ficou abaixo do mínimo legal (${fmt(min)}).`);
+    lines.push(`      Isso é permitido na 3ª fase quando há minorantes, como tentativa.`);
+  }
   lines.push("");
 
-  // 5. Detração
+  // Pós-dosimetria: Detração
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 5. DETRAÇÃO (Art. 42, CP)                                   │");
+  lines.push("│ PÓS-DOSIMETRIA — DETRAÇÃO (Art. 42, CP)                     │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   if (detAnos > 0) {
     lines.push(`   Tempo de prisão provisória: ${fmt(detAnos)}`);
@@ -411,9 +418,9 @@ export function generateRelatorio(
   }
   lines.push("");
 
-  // 6. Regime
+  // Pós-dosimetria: Regime
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 6. REGIME INICIAL DE CUMPRIMENTO (Art. 33, CP)              │");
+  lines.push("│ PÓS-DOSIMETRIA — REGIME INICIAL (Art. 33, CP)               │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   Regime: ${regime}`);
   lines.push(`   Fundamento: ${regiF}`);
@@ -428,9 +435,9 @@ export function generateRelatorio(
   }
   lines.push("");
 
-  // 7. Progressão
+  // Execução penal: Progressão
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 7. PROGRESSÃO DE REGIME (Art. 112, LEP)                     │");
+  lines.push("│ EXECUÇÃO PENAL — PROGRESSÃO DE REGIME (Art. 112, LEP)       │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   Fração: ${progressao.frac}`);
   lines.push(`   Tempo a cumprir: ${progressao.tempo}`);
@@ -438,9 +445,9 @@ export function generateRelatorio(
   lines.push("   (o condenado deve demonstrar bom comportamento carcerário)");
   lines.push("");
 
-  // 8. Substituição e Sursis
+  // Pós-dosimetria: Substituição e Sursis
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 8. SUBSTITUIÇÃO E SURSIS                                    │");
+  lines.push("│ PÓS-DOSIMETRIA — SUBSTITUIÇÃO E SURSIS                      │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push(`   Substituição por restritivas (Art. 44, CP):`);
   lines.push(`     → ${cabeSub ? "CABÍVEL — não reincidente em crime doloso, pena ≤ 4 anos, sem violência ou grave ameaça" : subCondicional ? "CONDICIONAL — art. 44, § 3º, se socialmente recomendável e sem reincidência pelo mesmo crime" : "NÃO CABE"}`);
@@ -451,9 +458,9 @@ export function generateRelatorio(
   lines.push(`     → ${sursis ? "CABE — sursis simples (pena ≤ 2 anos, não reincidente em crime doloso)" : sursisEt ? "VERIFICAR — sursis etário (> 70 anos) ou humanitário (doença grave), pena ≤ 4 anos" : "NÃO CABE"}`);
   lines.push("");
 
-  // 9. Prescrição
+  // Pós-dosimetria: Prescrição
   lines.push("┌─────────────────────────────────────────────────────────────┐");
-  lines.push("│ 9. PRESCRIÇÃO (Art. 109, CP)                                │");
+  lines.push("│ PÓS-DOSIMETRIA — PRESCRIÇÃO (Art. 109, CP)                  │");
   lines.push("└─────────────────────────────────────────────────────────────┘");
   lines.push("   A prescrição se calcula sobre a pena MÁXIMA em abstrato,");
   lines.push("   não sobre a pena aplicada ao réu.");
@@ -462,10 +469,10 @@ export function generateRelatorio(
   lines.push("   (a prescrição concreta/retroativa regula-se pela pena definitiva)");
   lines.push("");
 
-  // 10. Multa
+  // Pena de multa
   if (multaTotal && multaTotal !== "R$ 0,00") {
     lines.push("┌─────────────────────────────────────────────────────────────┐");
-    lines.push("│ 10. MULTA (Art. 49, CP)                                     │");
+    lines.push("│ PENA DE MULTA (Art. 49, CP)                                 │");
     lines.push("└─────────────────────────────────────────────────────────────┘");
     lines.push(`   Valor total: ${multaTotal}`);
     lines.push("   (os dias-multa variam de 10 a 360; o valor do dia-multa");

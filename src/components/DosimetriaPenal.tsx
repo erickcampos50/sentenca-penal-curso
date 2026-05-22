@@ -95,15 +95,16 @@ export default function DosimetriaPenal() {
   const atSum = atAtivos.reduce((s, a) => s + penBase * FV[a.frac], 0);
   const penInter = hasData ? Math.min(Math.max(penBase + agSum - atSum, min), max) : 0;
 
-  // Fase 3
-  let penDef = penInter;
   const minAtivos = minors.filter(m => m.desc?.trim() && m.frac in FV);
   const majAtivos = majors.filter(m => m.desc?.trim() && m.frac in FV);
+
+  // Fase 3
+  let penDef = penInter;
   minAtivos.forEach(m => { penDef = penDef * (1 - FV[m.frac]); });
-  majAtivos.forEach(m => { penDef = penDef * (1 + FV[m.frac]); });
   if (tentativa && penDef > 0 && tentativaFrac in FV) {
     penDef = penDef * (1 - FV[tentativaFrac]);
   }
+  majAtivos.forEach(m => { penDef = penDef * (1 + FV[m.frac]); });
   penDef = Math.max(penDef, 0);
 
   // Detração
@@ -184,6 +185,7 @@ export default function DosimetriaPenal() {
     atAtivos.length ? `ATENUANTES: penBase(${penBase.toFixed(4)}) x [${atAtivos.map(a=>a.frac).join(" + ")}] = -${atSum.toFixed(4)} anos (minimo ${min} anos — Súmula 231/STJ)` : null,
     `PENA INTERMEDIARIA: ${penBase.toFixed(4)} + ${agSum.toFixed(4)} - ${atSum.toFixed(4)} = ${penInter.toFixed(4)} anos -> ${fmt(penInter)}`,
     ...minAtivos.map((m,i)=>`MINORANTE ${i+1} (${m.frac}): x ${(1-FV[m.frac]).toFixed(4)}`),
+    tentativa && tentativaFrac in FV ? `TENTATIVA (art. 14, paragrafo unico, CP) (${tentativaFrac}): x ${(1-FV[tentativaFrac]).toFixed(4)}` : null,
     ...majAtivos.map((m,i)=>`MAJORANTE ${i+1} (${m.frac}): x ${(1+FV[m.frac]).toFixed(4)}`),
     `PENA DEFINITIVA: ${penDef.toFixed(4)} anos -> ${fmt(penDef)}`,
     detAnos > 0 ? `DETRACAO (art. 42): ${penDef.toFixed(4)} - ${detAnos.toFixed(4)} = ${penRem.toFixed(4)} anos -> ${fmt(penRem)}` : null,
@@ -227,7 +229,7 @@ export default function DosimetriaPenal() {
 
           {/* Moldura */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 className="font-bold text-sm mb-2">1. Moldura Penal</h2>
+            <h2 className="font-bold text-sm mb-2">Etapa preliminar — Moldura Penal</h2>
             <Info color="blue">
               Identifique o tipo penal aplicável. Se houver qualificadora, use a pena da forma qualificada — ela altera a própria moldura, não entra na 3ª fase.
             </Info>
@@ -295,22 +297,6 @@ export default function DosimetriaPenal() {
             </div>
             <div className="mt-3 space-y-2">
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                <input type="checkbox" checked={tentativa} onChange={e => setTentativa(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span>Crime tentado (art. 14, II e parágrafo único, CP)</span>
-              </label>
-              {tentativa && (
-                <div className="ml-5">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Redução da pena (quanto mais próximo da consumação, menor a redução)</label>
-                  <select value={tentativaFrac} onChange={e => setTentativaFrac(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:border-blue-400">
-                    <option value="2/3">2/3 — iter criminis muito distante da consumação</option>
-                    <option value="1/2">1/2 — iter criminis intermediário</option>
-                    <option value="1/3">1/3 — iter criminis próximo da consumação</option>
-                  </select>
-                </div>
-              )}
-              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={hediondo} onChange={e => setHediondo(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                 <span>Crime hediondo/equiparado (impacta progressão por legislação especial)</span>
@@ -345,7 +331,7 @@ export default function DosimetriaPenal() {
 
           {/* Fase 1 */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 className="font-bold text-sm mb-1">2. Primeira Fase — Pena-Base (Art. 59, CP)</h2>
+            <h2 className="font-bold text-sm mb-1">1. Primeira Fase — Pena-Base (Art. 59, CP)</h2>
             <p className="text-xs text-gray-500 mb-3">Clique em cada vetor para ver o que o torna desfavorável e os riscos de bis in idem.</p>
             <Info color="blue">
               Este aplicativo adota o método quantitativo de divisão do intervalo em 8 frações iguais (Método Tradicional). A valoração qualitativa das circunstâncias judiciais — atribuindo peso diferenciado conforme a intensidade de cada vetor no caso concreto — é responsabilidade do juiz e não pode ser inteiramente automatizada.
@@ -398,7 +384,7 @@ export default function DosimetriaPenal() {
 
           {/* Fase 2 */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 className="font-bold text-sm mb-1">3. Segunda Fase — Agravantes e Atenuantes (Arts. 61–66, CP)</h2>
+            <h2 className="font-bold text-sm mb-1">2. Segunda Fase — Agravantes e Atenuantes (Arts. 61–66, CP)</h2>
             <Info color="yellow" title="Regras obrigatórias nesta fase">
               <ul className="space-y-1">
                 <li>• <strong>Súmula 231/STJ:</strong> atenuante não reduz abaixo do mínimo legal.</li>
@@ -461,15 +447,33 @@ export default function DosimetriaPenal() {
 
           {/* Fase 3 */}
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 className="font-bold text-sm mb-1">4. Terceira Fase — Causas de Aumento e Diminuição (Art. 68, CP)</h2>
+            <h2 className="font-bold text-sm mb-1">3. Terceira Fase — Causas de Aumento e Diminuição (Art. 68, CP)</h2>
             <Info color="blue" title="Regras desta fase">
               <ul className="space-y-1">
                 <li>• Na 3ª fase, a pena <strong>pode ultrapassar o máximo</strong> ou ficar <strong>abaixo do mínimo</strong> legal.</li>
-                <li>• Ordem: aplica-se primeiro as minorantes, depois as majorantes.</li>
+                <li>• Ordem adotada: aplica-se primeiro as minorantes, incluindo a tentativa automática, depois as majorantes.</li>
                 <li>• <strong>Art. 68, parágrafo único:</strong> no concurso de causas de aumento da Parte Especial, o juiz pode limitar-se a um só aumento.</li>
                 <li>• <strong>Tentativa (art. 14, parágrafo único):</strong> redução de 1/3 a 2/3 conforme iter criminis percorrido — quanto mais próximo da consumação, menor a redução.</li>
               </ul>
             </Info>
+            <div className="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={tentativa} onChange={e => setTentativa(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Crime tentado (art. 14, II e parágrafo único, CP)</span>
+              </label>
+              {tentativa && (
+                <div className="mt-2 ml-5">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Redução da pena (quanto mais próximo da consumação, menor a redução)</label>
+                  <select value={tentativaFrac} onChange={e => setTentativaFrac(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:border-blue-400">
+                    <option value="2/3">2/3 — iter criminis muito distante da consumação</option>
+                    <option value="1/2">1/2 — iter criminis intermediário</option>
+                    <option value="1/3">1/3 — iter criminis próximo da consumação</option>
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="mb-4">
               <p className="text-xs font-bold text-red-600 mb-2">Causas de Aumento (Majorantes)</p>
               {majors.map((m, i) => (
@@ -552,6 +556,7 @@ export default function DosimetriaPenal() {
               <div className="mt-3 bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-1">
                 <p>Pena intermediária: {fmt(penInter)}</p>
                 {minAtivos.map((m,i) => <p key={i} className="text-green-700">Minorante {m.frac}: x {(1-FV[m.frac]).toFixed(4)}</p>)}
+                {tentativa && tentativaFrac in FV && <p className="text-green-700">Tentativa {tentativaFrac}: x {(1-FV[tentativaFrac]).toFixed(4)}</p>}
                 {majAtivos.map((m,i) => <p key={i} className="text-red-700">Majorante {m.frac}: x {(1+FV[m.frac]).toFixed(4)}</p>)}
                 <p className="font-bold text-blue-800 text-sm">Pena definitiva: {fmt(penDef)}</p>
               </div>
