@@ -39,7 +39,7 @@ export default function MultaSection({ multa, setMulta }: Props) {
       <Info color="gray">
         A multa é fixada em dias-multa (10 a 360), multiplicados pelo valor do dia-multa (de 1/30 a 5 vezes o maior salário mínimo vigente ao tempo do fato).
       </Info>
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1">Maior salário mínimo mensal ao tempo do fato (R$)</label>
           <input

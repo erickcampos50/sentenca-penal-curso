@@ -132,7 +132,7 @@ export default function ResultadoFinal(props: Props) {
           <p className="text-gray-600">A 1ª fase define a pena-base dentro da moldura legal. A 2ª fase ajusta essa pena por agravantes e atenuantes sem ultrapassar a moldura. A 3ª fase aplica causas de aumento ou diminuição e pode sair dos limites mínimo e máximo do tipo penal.</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div className="bg-white rounded-lg p-2 border border-gray-200">
             <p className="text-gray-500 text-xs">Regime inicial</p>
             <p className={`font-bold text-sm ${regCorMap(regime)}`}>{regime}</p>

@@ -169,7 +169,7 @@ export default function PrescricaoDetracao({
             <span>Prescrição retroativa (art. 110, §1º CP) — usar pena definitiva</span>
           </label>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Data da denúncia</label>
               <input
@@ -213,7 +213,7 @@ export default function PrescricaoDetracao({
           <div>
             <p className="text-xs font-semibold text-gray-600 mb-1">Outras suspensões (outro processo, país estrangeiro)</p>
             {presc.periodosSuspensao.map((s, i) => (
-              <div key={i} className="flex gap-2 mb-2 items-center">
+              <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2 sm:items-center">
                 <input
                   value={s.motivo}
                   onChange={e => {
@@ -221,7 +221,7 @@ export default function PrescricaoDetracao({
                     next[i] = { ...next[i], motivo: e.target.value };
                     setPresc(p => ({ ...p, periodosSuspensao: next }));
                   }}
-                  className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
+                  className="w-full min-w-0 sm:flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
                   placeholder="Motivo (ex: outro crime, extradição pendente)"
                 />
                 <input
@@ -233,7 +233,7 @@ export default function PrescricaoDetracao({
                     next[i] = { ...next[i], dias: e.target.value };
                     setPresc(p => ({ ...p, periodosSuspensao: next }));
                   }}
-                  className="w-20 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
+                  className="w-full sm:w-20 sm:shrink-0 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
                   placeholder="dias"
                 />
                 <button
@@ -241,7 +241,7 @@ export default function PrescricaoDetracao({
                     const next = presc.periodosSuspensao.filter((_, j) => j !== i);
                     setPresc(p => ({ ...p, periodosSuspensao: next }));
                   }}
-                  className="text-red-400 font-bold text-sm"
+                  className="self-end sm:self-auto text-red-400 font-bold text-sm"
                 >
                   ✕
                 </button>

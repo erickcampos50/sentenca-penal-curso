@@ -195,7 +195,7 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Crime / descrição manual</label>
                 <input

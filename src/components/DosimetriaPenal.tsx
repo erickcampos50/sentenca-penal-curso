@@ -258,7 +258,7 @@ export default function DosimetriaPenal() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Pena mínima (anos)</label>
                 <input type="number" min="0" step="0.5" value={penMin} onChange={e => setPenMin(e.target.value)}
@@ -339,20 +339,20 @@ export default function DosimetriaPenal() {
             <div className="space-y-2">
               {VETORES.map((v, i) => (
                 <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="flex items-center gap-2 p-2.5 cursor-pointer hover:bg-gray-50"
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 cursor-pointer hover:bg-gray-50"
                     onClick={() => setOpenV(openV === i ? null : i)}>
-                    <span className="text-xs font-semibold text-gray-700 w-44 shrink-0">{v.name}</span>
+                    <span className="text-xs font-semibold text-gray-700 w-full sm:w-44 sm:shrink-0">{v.name}</span>
                     <select value={classi[i]}
                       onClick={e => e.stopPropagation()}
                       onChange={e => { const n=[...classi]; n[i]=e.target.value; setClassi(n); }}
-                      className="border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                      className="w-full min-w-0 sm:w-auto border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
                       <option value="neutro">Neutro</option>
                       <option value="favoravel">Favorável</option>
                       <option value="desfavoravel">Desfavorável ↑</option>
                     </select>
                     {classi[i]==="desfavoravel" && <Pill color="red">+{fmt(acPorVetor)}</Pill>}
                     {classi[i]==="favoravel" && <Pill color="green">Favorável</Pill>}
-                    <span className="ml-auto text-gray-400 text-xs">{openV===i?"▲":"▼"}</span>
+                    <span className="self-end sm:self-auto sm:ml-auto text-gray-400 text-xs">{openV===i?"▲":"▼"}</span>
                   </div>
                   {openV===i && (
                     <div className="bg-gray-50 border-t border-gray-200 p-3 text-xs space-y-2">
@@ -397,9 +397,9 @@ export default function DosimetriaPenal() {
             <div className="mb-4">
               <p className="text-xs font-bold text-red-600 mb-2">Agravantes (arts. 61–62, CP)</p>
               {agravs.map((a, i) => (
-                <div key={i} className="flex gap-2 mb-2 items-center">
-                  <select value={a.desc} onChange={e => updRow(setAgravs, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                  <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2 sm:items-center">
+                    <select value={a.desc} onChange={e => updRow(setAgravs, i, "desc", e.target.value)}
+                    className="w-full min-w-0 sm:flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
                     <option value="">-- selecione a agravante --</option>
                     {AGRAVANTES_LIST.map(ag => (
                       <option key={ag.code+ag.desc} value={`${ag.code}: ${ag.desc}`}>{ag.code}: {ag.desc}</option>
@@ -407,10 +407,10 @@ export default function DosimetriaPenal() {
                     <option value="Legislação especial">Legislação especial</option>
                   </select>
                   <select value={a.frac} onChange={e => updRow(setAgravs, i, "frac", e.target.value)}
-                    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                    className="w-full sm:w-16 sm:shrink-0 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                     {FRACS.map(f => <option key={f}>{f}</option>)}
                   </select>
-                  <button onClick={() => remRow(setAgravs, i)} className="text-red-400 font-bold text-sm">✕</button>
+                  <button onClick={() => remRow(setAgravs, i)} className="self-end sm:self-auto text-red-400 font-bold text-sm">✕</button>
                 </div>
               ))}
               <button onClick={() => addRow(setAgravs)} className="text-xs text-blue-500 hover:underline">+ Adicionar agravante</button>
@@ -418,19 +418,19 @@ export default function DosimetriaPenal() {
             <div>
               <p className="text-xs font-bold text-green-600 mb-2">Atenuantes (arts. 65–66, CP)</p>
               {atens.map((a, i) => (
-                <div key={i} className="flex gap-2 mb-2 items-center">
-                  <select value={a.desc} onChange={e => updRow(setAtens, i, "desc", e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                  <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2 sm:items-center">
+                    <select value={a.desc} onChange={e => updRow(setAtens, i, "desc", e.target.value)}
+                    className="w-full min-w-0 sm:flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
                     <option value="">-- selecione a atenuante --</option>
                     {ATENUANTES_LIST.map(at => (
                       <option key={at.code+at.desc} value={`${at.code}: ${at.desc}`}>{at.code}: {at.desc}</option>
                     ))}
                   </select>
                   <select value={a.frac} onChange={e => updRow(setAtens, i, "frac", e.target.value)}
-                    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                    className="w-full sm:w-16 sm:shrink-0 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                     {FRACS.map(f => <option key={f}>{f}</option>)}
                   </select>
-                  <button onClick={() => remRow(setAtens, i)} className="text-red-400 font-bold text-sm">✕</button>
+                  <button onClick={() => remRow(setAtens, i)} className="self-end sm:self-auto text-red-400 font-bold text-sm">✕</button>
                 </div>
               ))}
               <button onClick={() => addRow(setAtens)} className="text-xs text-blue-500 hover:underline">+ Adicionar atenuante</button>
@@ -478,7 +478,7 @@ export default function DosimetriaPenal() {
               <p className="text-xs font-bold text-red-600 mb-2">Causas de Aumento (Majorantes)</p>
               {majors.map((m, i) => (
                 <div key={i}>
-                  <div className="flex gap-2 mb-1 items-center">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-1 sm:items-center">
                     <select value={m.desc.startsWith("Outra:") ? "Outra" : m.desc} onChange={e => {
                       const val = e.target.value;
                       if (val === "Outra") {
@@ -487,7 +487,7 @@ export default function DosimetriaPenal() {
                         updRow(setMajors, i, "desc", val);
                       }
                     }}
-                      className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                      className="w-full min-w-0 sm:flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
                       <option value="">-- selecione a majorante --</option>
                       {MAJORANTES_LIST.map(ma => (
                         <option key={ma.code+ma.desc} value={`${ma.code}: ${ma.desc}`}>{ma.code}: {ma.desc}</option>
@@ -495,10 +495,10 @@ export default function DosimetriaPenal() {
                       <option value="Outra">Outra (digite manualmente)</option>
                     </select>
                     <select value={m.frac} onChange={e => updRow(setMajors, i, "frac", e.target.value)}
-                      className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                      className="w-full sm:w-16 sm:shrink-0 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                       {FRACS.map(f => <option key={f}>{f}</option>)}
                     </select>
-                    <button onClick={() => remRow(setMajors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                    <button onClick={() => remRow(setMajors, i)} className="self-end sm:self-auto text-red-400 font-bold text-sm">✕</button>
                   </div>
                   {m.desc.startsWith("Outra:") && (
                     <input
@@ -517,7 +517,7 @@ export default function DosimetriaPenal() {
               <p className="text-xs font-bold text-green-600 mb-2">Causas de Diminuição (Minorantes)</p>
               {minors.map((m, i) => (
                 <div key={i}>
-                  <div className="flex gap-2 mb-1 items-center">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-1 sm:items-center">
                     <select value={m.desc.startsWith("Outra:") ? "Outra" : m.desc} onChange={e => {
                       const val = e.target.value;
                       if (val === "Outra") {
@@ -526,7 +526,7 @@ export default function DosimetriaPenal() {
                         updRow(setMinors, i, "desc", val);
                       }
                     }}
-                      className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                      className="w-full min-w-0 sm:flex-1 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
                       <option value="">-- selecione a minorante --</option>
                       {MINORANTES_LIST.map(mi => (
                         <option key={mi.code+mi.desc} value={`${mi.code}: ${mi.desc}`}>{mi.code}: {mi.desc}</option>
@@ -534,10 +534,10 @@ export default function DosimetriaPenal() {
                       <option value="Outra">Outra (digite manualmente)</option>
                     </select>
                     <select value={m.frac} onChange={e => updRow(setMinors, i, "frac", e.target.value)}
-                      className="w-16 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
+                      className="w-full sm:w-16 sm:shrink-0 border border-gray-300 rounded px-1 py-1 text-xs bg-white">
                       {FRACS.map(f => <option key={f}>{f}</option>)}
                     </select>
-                    <button onClick={() => remRow(setMinors, i)} className="text-red-400 font-bold text-sm">✕</button>
+                    <button onClick={() => remRow(setMinors, i)} className="self-end sm:self-auto text-red-400 font-bold text-sm">✕</button>
                   </div>
                   {m.desc.startsWith("Outra:") && (
                     <input
