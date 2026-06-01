@@ -35,6 +35,7 @@ export default function DosimetriaPenal() {
 
   // Accordion state — which phase is expanded (null = all collapsed)
   const [expandedPhase, setExpandedPhase] = useState<number | null>(1);
+  const [openReferenceAccordion, setOpenReferenceAccordion] = useState<"refs" | "sumulas" | null>(null);
   // Info toggle per phase
   const [showInfo, setShowInfo] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false });
 
@@ -203,13 +204,12 @@ export default function DosimetriaPenal() {
 
   const tabs = [
     { id: "calc", label: "Calculadora" },
-    { id: "concurso", label: "Concurso" },
-    { id: "refs", label: "Lei" },
-    { id: "sumulas", label: "Súmulas" },
-    { id: "audit", label: "Auditoria" },
+    { id: "concurso", label: "Concurso de crimes" },
+    { id: "audit", label: "Auditoria dos cálculos" },
   ];
 
   const togglePhase = (n: number) => setExpandedPhase(expandedPhase === n ? null : n);
+  const toggleReferenceAccordion = (id: "refs" | "sumulas") => setOpenReferenceAccordion(openReferenceAccordion === id ? null : id);
   const toggleInfo = (n: number) => setShowInfo(prev => ({ ...prev, [n]: !prev[n] }));
 
   const phaseDotBg: Record<number, string> = { 1: "bg-brand-50 text-brand-600 border-brand-200", 2: "bg-amber-50 text-amber-600 border-amber-200", 3: "bg-emerald-50 text-emerald-600 border-emerald-200" };
@@ -716,9 +716,25 @@ export default function DosimetriaPenal() {
       {/* ========== CONCURSO ========== */}
       {tab === "concurso" && <ConcursoSection crimesList={crimesList} crimes={concursoCrimes} setCrimes={setConcursoCrimes} config={concursoConfig} setConfig={setConcursoConfig} />}
 
-      {/* ========== REFERÊNCIAS LEGAIS ========== */}
-      {tab === "refs" && (
-        <div className="space-y-3">
+      {/* ========== REFERÊNCIAS E SÚMULAS ========== */}
+      {tab === "calc" && (
+        <div className="space-y-3 mt-5">
+          <div className={`bg-white rounded-[4px] border transition-colors duration-150 overflow-hidden ${
+            openReferenceAccordion === "refs" ? "border-brand-500" : "border-[#dee2e6]"
+          }`}>
+            <button
+              onClick={() => toggleReferenceAccordion("refs")}
+              className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-[#f8f9fa] transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm text-[#212529]">Leis de referência</div>
+                <div className="text-xs text-[#868e96]">Bases legais, regime inicial e prescrição</div>
+              </div>
+              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${openReferenceAccordion === "refs" ? "rotate-180" : ""}`}>▼</span>
+            </button>
+            {openReferenceAccordion === "refs" && (
+              <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
+                <div className="space-y-3 mt-4">
           {[
             { t: "Art. 59, CP — Circunstâncias Judiciais (1ª Fase)",
               c: "O juiz, atendendo à culpabilidade, aos antecedentes, à conduta social, à personalidade do agente, aos motivos, às circunstâncias e consequências do crime, bem como ao comportamento da vítima, estabelecerá, conforme seja necessário e suficiente para reprovação e prevenção do crime:\nI – as penas aplicáveis;\nII – a quantidade de pena aplicável dentro dos limites previstos;\nIII – o regime inicial de cumprimento da pena;\nIV – a substituição da pena privativa de liberdade." },
@@ -808,13 +824,28 @@ export default function DosimetriaPenal() {
             </table>
             <p className="text-xs text-[#868e96] mt-2">Art. 115: redução à metade se o réu era menor de 21 anos ao tempo do crime ou maior de 70 na sentença.</p>
           </div>
-        </div>
-      )}
+                </div>
+              </div>
+            )}
+          </div>
 
-      {/* ========== SÚMULAS ========== */}
-      {tab === "sumulas" && (
-        <div className="space-y-3">
-          <Info color="blue" title="Como usar">
+          <div className={`bg-white rounded-[4px] border transition-colors duration-150 overflow-hidden ${
+            openReferenceAccordion === "sumulas" ? "border-brand-500" : "border-[#dee2e6]"
+          }`}>
+            <button
+              onClick={() => toggleReferenceAccordion("sumulas")}
+              className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-[#f8f9fa] transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm text-[#212529]">Súmulas utilizadas</div>
+                <div className="text-xs text-[#868e96]">Entendimentos aplicados à dosimetria</div>
+              </div>
+              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${openReferenceAccordion === "sumulas" ? "rotate-180" : ""}`}>▼</span>
+            </button>
+            {openReferenceAccordion === "sumulas" && (
+              <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
+                <div className="space-y-3 mt-4">
+          <Info color="blue" title="Entenda a utilização das súmulas">
             Cada súmula indica a fase em que é aplicada. Verifique se o fundamento da circunstância já foi usado em outra fase (bis in idem) antes de aplicar.
           </Info>
           {SUMULAS.map((s,i) => (
@@ -834,6 +865,10 @@ export default function DosimetriaPenal() {
               <p><strong>Maus antecedentes:</strong> Inquéritos e ações em curso não servem (Súmula 444/STJ). Exige condenação transitada em julgado fora do período depurador.</p>
               <p><strong>Confissão qualificada (STJ):</strong> O réu que confessa o fato mas alega excludente de ilicitude ou culpabilidade também tem direito à atenuante, desde que a confissão tenha sido usada para a condenação (Súmula 545/STJ).</p>
             </div>
+          </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
