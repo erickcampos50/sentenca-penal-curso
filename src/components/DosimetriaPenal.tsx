@@ -1012,6 +1012,12 @@ export default function DosimetriaPenal() {
           )}
         </div>
       )}
+      <footer className="mt-8 rounded-[4px] border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
+        <p className="font-extrabold">Aviso de uso didático</p>
+        <p className="mt-1">
+          Esta calculadora tem finalidade exclusivamente didática e experimental. Ela não deve ser utilizada para decisões, peças, sentenças, pareceres ou qualquer situação real. Os resultados podem conter erros, omissões ou interpretações inadequadas, e não substituem análise jurídica profissional. O uso da ferramenta é de responsabilidade exclusiva do usuário, ficando a calculadora e seu desenvolvedor isentos de responsabilidade por quaisquer consequências decorrentes de sua utilização.
+        </p>
+      </footer>
     </div>
   );
 }
