@@ -7,3 +7,77 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media print {
+  @page {
+    margin: 14mm;
+    size: A4;
+  }
+
+  html,
+  body,
+  #root {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print,
+  button,
+  input,
+  select,
+  datalist {
+    display: none !important;
+  }
+
+  #root > div {
+    min-height: auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .print-report {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    color: #111111 !important;
+  }
+
+  .print-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #d0d0d0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    margin-bottom: 12px !important;
+  }
+
+  .calculation-log {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  .calculation-log h3,
+  .calculation-log p {
+    color: #111111 !important;
+  }
+
+  table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  th,
+  td {
+    color: #111111 !important;
+    border-color: #d0d0d0 !important;
+  }
+}

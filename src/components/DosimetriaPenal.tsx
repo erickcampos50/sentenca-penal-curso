@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { IconChevronDown, IconFileAnalytics, IconHelpCircle, IconPrinter } from "@tabler/icons-react";
 import { Info, Pill } from "./dosimetria/InfoPill";
 import {
   VETORES, AGRAVANTES_LIST, ATENUANTES_LIST, MAJORANTES_LIST, MINORANTES_LIST,
@@ -216,23 +217,28 @@ export default function DosimetriaPenal() {
   const phaseAccent: Record<number, string> = { 1: "border-brand-500", 2: "border-amber-500", 3: "border-emerald-500" };
   const phaseResultColor: Record<number, string> = { 1: "text-brand-600", 2: "text-amber-600", 3: "text-emerald-600" };
   const phaseInfoBg: Record<number, string> = { 1: "bg-brand-50 border-brand-200", 2: "bg-amber-50 border-amber-200", 3: "bg-emerald-50 border-emerald-200" };
-  const phaseInfoBtn: Record<number, string> = { 1: "hover:border-brand-300 hover:text-brand-600 border-brand-200 text-brand-600 bg-brand-50", 2: "hover:border-amber-300 hover:text-amber-600 border-amber-200 text-amber-600 bg-amber-50", 3: "hover:border-emerald-300 hover:text-emerald-600 border-emerald-200 text-emerald-600 bg-emerald-50" };
   const phaseResultBg: Record<number, string> = { 1: "bg-brand-50 border-brand-200 text-brand-700", 2: "bg-amber-50 border-amber-200 text-amber-700", 3: "bg-emerald-50 border-emerald-200 text-emerald-700" };
 
   // Mantine shared input class
   const inputCls = "w-full h-[42px] px-3 text-sm rounded-[4px] border border-[#ced4da] bg-white text-[#212529] placeholder:text-[#adb5bd] focus:outline-none focus:border-brand-500 transition-colors duration-100";
   const selectCls = "w-full h-[42px] px-3 text-sm rounded-[4px] border border-[#ced4da] bg-white text-[#212529] cursor-pointer focus:outline-none focus:border-brand-500 transition-colors duration-100";
   const labelCls = "block text-sm font-medium text-[#212529] mb-1";
+  const helpButtonCls = (active: boolean) => `w-9 h-9 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
+    active
+      ? "border-brand-400 text-brand-700 bg-brand-50 shadow-sm ring-2 ring-brand-100"
+      : "border-brand-200 text-brand-600 bg-white hover:border-brand-400 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm"
+  }`;
+  const chevronCls = (active: boolean) => `text-[#868e96] transition-transform duration-200 flex-shrink-0 ${active ? "rotate-180" : ""}`;
 
   return (
     <div className=" mx-auto px-4 py-6 font-sans text-sm bg-[#f8f9fa] min-h-screen">
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 no-print">
         <h1 className="text-[22px] font-extrabold text-[#212529] tracking-tight">Dosimetria Penal</h1>
         <p className="text-sm text-[#868e96] mt-1">Sistema Trifásico · Art. 68, CP · Cálculo auditável</p>
       </div>
 
       {/* Mantine Tabs — full-width underline with bold active state */}
-      <div className="border-b border-[#dee2e6] mb-6">
+      <div className="border-b border-[#dee2e6] mb-6 no-print">
         <div className="flex -mb-px">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -260,10 +266,12 @@ export default function DosimetriaPenal() {
               <h2 className="font-bold text-base text-[#212529]">Moldura Penal</h2>
               <button
                 onClick={() => toggleInfo(0)}
-                className={`w-[28px] h-[28px] rounded-[4px] border text-[13px] font-bold flex items-center justify-center transition-colors ${
-                  showInfo[0] ? 'border-brand-300 text-brand-600 bg-brand-50' : 'border-[#dee2e6] text-[#868e96] hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50'
-                }`}
-              >ℹ</button>
+                className={helpButtonCls(Boolean(showInfo[0]))}
+                title="Mostrar orientação sobre a moldura penal"
+                aria-label="Mostrar orientação sobre a moldura penal"
+              >
+                <IconHelpCircle size={21} stroke={2.3} />
+              </button>
             </div>
 
             {showInfo[0] && (
@@ -392,16 +400,20 @@ export default function DosimetriaPenal() {
                 {hasData && <div className="text-xl font-extrabold text-brand-600">{fmt(penBase)}</div>}
                 {!hasData && <div className="text-sm text-[#adb5bd]">—</div>}
               </div>
-              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${expandedPhase === 1 ? 'rotate-180' : ''}`}>▼</span>
+              <IconChevronDown size={22} stroke={2.4} className={chevronCls(expandedPhase === 1)} />
             </button>
             {expandedPhase === 1 && (
               <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
                 <div className="flex items-center justify-between mt-4 mb-3">
                   <p className="text-[13px] text-[#868e96]">Clique em cada vetor para expandir os detalhes.</p>
-                  <button onClick={() => toggleInfo(1)}
-                    className={`w-[28px] h-[28px] rounded-[4px] border text-[13px] font-bold flex items-center justify-center flex-shrink-0 transition-colors ${
-                      showInfo[1] ? phaseInfoBtn[1] : 'border-[#dee2e6] text-[#868e96] hover:border-[#ced4da] hover:text-[#495057] hover:bg-[#f8f9fa]'
-                    }`}>ℹ</button>
+                  <button
+                    onClick={() => toggleInfo(1)}
+                    className={helpButtonCls(Boolean(showInfo[1]))}
+                    title="Mostrar orientação da 1ª fase"
+                    aria-label="Mostrar orientação da 1ª fase"
+                  >
+                    <IconHelpCircle size={21} stroke={2.3} />
+                  </button>
                 </div>
                 {showInfo[1] && (
                   <div className={`mb-4 p-3 text-[13px] text-[#212529] leading-relaxed rounded-[4px] border animate-[fadeIn_0.2s_ease] ${phaseInfoBg[1]}`}>
@@ -425,7 +437,7 @@ export default function DosimetriaPenal() {
                         </select>
                         {classi[i]==="desfavoravel" && <Pill color="red">+{fmt(acPorVetor)}</Pill>}
                         {classi[i]==="favoravel" && <Pill color="green">Favorável</Pill>}
-                        <span className="self-end sm:self-auto sm:ml-auto text-[#adb5bd] text-xs">{openV===i?"▲":"▼"}</span>
+                        <IconChevronDown size={20} stroke={2.3} className={`self-end sm:self-auto sm:ml-auto text-[#868e96] transition-transform duration-200 flex-shrink-0 ${openV === i ? "rotate-180" : ""}`} />
                       </div>
                       {openV===i && (
                         <div className="bg-[#f8f9fa] border-t border-[#dee2e6] p-4 text-sm space-y-2">
@@ -436,7 +448,11 @@ export default function DosimetriaPenal() {
                             <strong>Alerta:</strong> {v.alerta}
                           </div>
                           <div>
-                            <label className={labelCls}>Fundamento fático nos autos:</label>
+                            <label className={labelCls}>Fundamento fático para auditoria</label>
+                            <div className="mb-2 flex items-start gap-2 rounded-[4px] border border-brand-200 bg-brand-50 p-3 text-[13px] leading-relaxed text-brand-800">
+                              <IconFileAnalytics size={18} stroke={2.2} className="mt-0.5 flex-shrink-0" />
+                              <span>Este texto aparecerá na aba Auditoria e na memória de cálculo exportada.</span>
+                            </div>
                             <input className={inputCls}
                               placeholder="Descreva o fato concreto..."
                               value={obs[i]} onChange={e => { const n=[...obs]; n[i]=e.target.value; setObs(n); }} />
@@ -471,16 +487,20 @@ export default function DosimetriaPenal() {
                 {hasData && <div className="text-xl font-extrabold text-amber-600">{fmt(penInter)}</div>}
                 {!hasData && <div className="text-sm text-[#adb5bd]">—</div>}
               </div>
-              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${expandedPhase === 2 ? 'rotate-180' : ''}`}>▼</span>
+              <IconChevronDown size={22} stroke={2.4} className={chevronCls(expandedPhase === 2)} />
             </button>
             {expandedPhase === 2 && (
               <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
                 <div className="flex items-center justify-between mt-4 mb-3">
                   <p className="text-[13px] text-[#868e96]">Ajuste da pena-base conforme circunstâncias legais.</p>
-                  <button onClick={() => toggleInfo(2)}
-                    className={`w-[28px] h-[28px] rounded-[4px] border text-[13px] font-bold flex items-center justify-center flex-shrink-0 transition-colors ${
-                      showInfo[2] ? phaseInfoBtn[2] : 'border-[#dee2e6] text-[#868e96] hover:border-[#ced4da] hover:text-[#495057] hover:bg-[#f8f9fa]'
-                    }`}>ℹ</button>
+                  <button
+                    onClick={() => toggleInfo(2)}
+                    className={helpButtonCls(Boolean(showInfo[2]))}
+                    title="Mostrar orientação da 2ª fase"
+                    aria-label="Mostrar orientação da 2ª fase"
+                  >
+                    <IconHelpCircle size={21} stroke={2.3} />
+                  </button>
                 </div>
                 {showInfo[2] && (
                   <div className={`mb-4 p-3 text-[13px] text-[#212529] leading-relaxed rounded-[4px] border space-y-1 animate-[fadeIn_0.2s_ease] ${phaseInfoBg[2]}`}>
@@ -553,16 +573,20 @@ export default function DosimetriaPenal() {
                 {hasData && <div className="text-xl font-extrabold text-emerald-600">{fmt(penDef)}</div>}
                 {!hasData && <div className="text-sm text-[#adb5bd]">—</div>}
               </div>
-              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${expandedPhase === 3 ? 'rotate-180' : ''}`}>▼</span>
+              <IconChevronDown size={22} stroke={2.4} className={chevronCls(expandedPhase === 3)} />
             </button>
             {expandedPhase === 3 && (
               <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
                 <div className="flex items-center justify-between mt-4 mb-3">
                   <p className="text-[13px] text-[#868e96]">Causas da Parte Geral e Especial. Pena pode sair da moldura.</p>
-                  <button onClick={() => toggleInfo(3)}
-                    className={`w-[28px] h-[28px] rounded-[4px] border text-[13px] font-bold flex items-center justify-center flex-shrink-0 transition-colors ${
-                      showInfo[3] ? phaseInfoBtn[3] : 'border-[#dee2e6] text-[#868e96] hover:border-[#ced4da] hover:text-[#495057] hover:bg-[#f8f9fa]'
-                    }`}>ℹ</button>
+                  <button
+                    onClick={() => toggleInfo(3)}
+                    className={helpButtonCls(Boolean(showInfo[3]))}
+                    title="Mostrar orientação da 3ª fase"
+                    aria-label="Mostrar orientação da 3ª fase"
+                  >
+                    <IconHelpCircle size={21} stroke={2.3} />
+                  </button>
                 </div>
                 {showInfo[3] && (
                   <div className={`mb-4 p-3 text-[13px] text-[#212529] leading-relaxed rounded-[4px] border space-y-1 animate-[fadeIn_0.2s_ease] ${phaseInfoBg[3]}`}>
@@ -730,7 +754,7 @@ export default function DosimetriaPenal() {
                 <div className="font-semibold text-sm text-[#212529]">Leis de referência</div>
                 <div className="text-xs text-[#868e96]">Bases legais, regime inicial e prescrição</div>
               </div>
-              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${openReferenceAccordion === "refs" ? "rotate-180" : ""}`}>▼</span>
+              <IconChevronDown size={22} stroke={2.4} className={chevronCls(openReferenceAccordion === "refs")} />
             </button>
             {openReferenceAccordion === "refs" && (
               <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
@@ -840,7 +864,7 @@ export default function DosimetriaPenal() {
                 <div className="font-semibold text-sm text-[#212529]">Súmulas utilizadas</div>
                 <div className="text-xs text-[#868e96]">Entendimentos aplicados à dosimetria</div>
               </div>
-              <span className={`text-[#868e96] transition-transform duration-200 text-sm ${openReferenceAccordion === "sumulas" ? "rotate-180" : ""}`}>▼</span>
+              <IconChevronDown size={22} stroke={2.4} className={chevronCls(openReferenceAccordion === "sumulas")} />
             </button>
             {openReferenceAccordion === "sumulas" && (
               <div className="px-4 pb-4 border-t border-[#dee2e6] animate-[fadeIn_0.25s_ease]">
@@ -875,18 +899,54 @@ export default function DosimetriaPenal() {
 
       {/* ========== AUDITORIA ========== */}
       {tab === "audit" && (
-        <div className="space-y-4">
-          <Info color="blue" title="Como auditar">
-            Esta seção reproduz cada passo do cálculo com os valores exatos em anos decimais (base: 1 ano = 360 dias = 12 meses). Use-a para confrontar com a sentença ou identificar divergências.
-          </Info>
+        <div className="space-y-4 print-report">
+          <div className="no-print">
+            <Info color="blue" title="Como auditar">
+              Esta seção reproduz cada passo do cálculo com os valores exatos em anos decimais (base: 1 ano = 360 dias = 12 meses). Use-a para confrontar com a sentença ou identificar divergências.
+            </Info>
+          </div>
           {!hasData ? (
             <div className="bg-white rounded-[4px] p-8 text-center text-[#868e96] border border-[#dee2e6] text-sm">
               Preencha a moldura penal na aba Calculadora para ver o log de auditoria.
             </div>
           ) : (
             <>
-              <div className="bg-[#1a1b1e] rounded-[4px] p-4">
-                <h3 className="text-xs font-bold text-[#909296] uppercase tracking-wider mb-3">Log de Cálculo</h3>
+              <div className="bg-white rounded-[4px] p-5 border border-[#dee2e6] print-card">
+                <div className="flex flex-col gap-3 border-b border-[#dee2e6] pb-4 mb-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-extrabold text-[#212529]">Memória de Cálculo - Dosimetria Penal</h2>
+                    <p className="text-xs text-[#868e96]">Relatório detalhado para conferência e juntada aos autos.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="no-print inline-flex h-[42px] items-center justify-center gap-2 rounded-[4px] bg-brand-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                  >
+                    <IconPrinter size={19} stroke={2.2} />
+                    Imprimir / exportar PDF
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    ["Pena-base", fmt(penBase)],
+                    ["Pena intermediária", fmt(penInter)],
+                    ["Pena definitiva", fmt(penDef)],
+                    ["Pena após detração", detAnos > 0 ? fmt(penRem) : "Sem detração"],
+                    ["Regime inicial", regime],
+                    ["Substituição", subTxt],
+                    ["Sursis", sursis ? "Cabível" : sursisEt ? "Verificar etário/humanitário" : "Não cabe"],
+                    ["Prescrição", prescConc ? `${prescConc} anos` : "—"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-[4px] border border-[#dee2e6] bg-[#f8f9fa] p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-[#868e96]">{label}</p>
+                      <p className="mt-1 text-sm font-semibold text-[#212529]">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="calculation-log bg-[#1a1b1e] rounded-[4px] p-4 print-card">
+                <h3 className="text-xs font-bold text-[#909296] uppercase tracking-wider mb-3">Memória de Cálculo</h3>
                 <div className="space-y-1 font-mono">
                   {audit.map((line, i) => (
                     <p key={i} className={`text-[13px] ${line.startsWith("PENA")||line.startsWith("REGIME")||line.startsWith("SUBSTITUICAO")||line.startsWith("SURSIS")||line.startsWith("PRESCRICAO") ? "text-amber-400 font-bold" : "text-emerald-400"}`}>
@@ -896,7 +956,7 @@ export default function DosimetriaPenal() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6]">
+              <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6] print-card">
                 <h3 className="font-bold text-base text-[#212529] mb-3">Vetores do Art. 59 — Classificação e Fundamento</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
@@ -926,7 +986,7 @@ export default function DosimetriaPenal() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6]">
+              <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6] print-card">
                 <h3 className="font-bold text-base text-[#212529] mb-3">Fórmulas Utilizadas</h3>
                 <div className="bg-[#f8f9fa] rounded-[4px] p-4 font-mono text-sm text-[#212529] space-y-1.5 leading-relaxed">
                   <p><strong>1ª fase (pena-base):</strong> min + (N_neg × intervalo ÷ 8)</p>
