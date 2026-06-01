@@ -24,6 +24,9 @@ const FRACOES_CONTINUADO = [
   { label: "2/3", value: String(2 / 3) },
 ];
 
+const inputCls = "w-full h-[42px] px-3 text-sm rounded-[4px] border border-[#ced4da] bg-white text-[#212529] focus:outline-none focus:border-brand-500 transition-colors";
+const labelCls = "block text-sm font-medium text-[#212529] mb-1";
+
 export default function ConcursoSection({ crimesList, crimes, setCrimes, config, setConfig }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -42,11 +45,8 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
     const crime = crimesList.find(c => c.nome === nome);
     if (crime) {
       setCrimes(prev => prev.map(c => c.id === id ? {
-        ...c,
-        nome: crime.nome,
-        tipo: crime.tipo,
-        penaMin: String(crime.pena_min),
-        penaMax: String(crime.pena_max),
+        ...c, nome: crime.nome, tipo: crime.tipo,
+        penaMin: String(crime.pena_min), penaMax: String(crime.pena_max),
         observacao: crime.observacao,
       } : c));
     } else {
@@ -79,7 +79,7 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
     "",
     `Resultado pela modalidade escolhida: ${fmt(resultado.resultadoEscolhido)}`,
     "",
-    "Nota didática: o concurso deve ser calculado após a dosimetria individual de cada crime. A escolha da modalidade depende dos fatos: número de condutas, desígnios autônomos, mesma espécie e condições de tempo, lugar e modo de execução.",
+    "Nota didática: o concurso deve ser calculado após a dosimetria individual de cada crime.",
   ].join("\n") : "";
 
   const handleCopy = async () => {
@@ -88,47 +88,46 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
       await navigator.clipboard.writeText(relatorio);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+    } catch { setCopied(false); }
   };
 
   return (
     <div className="space-y-4">
       <Info color="blue" title="Concurso de Crimes (Arts. 69-71, CP)">
-        Adicione as penas definitivas individuais depois da dosimetria trifásica de cada crime. A aba compara cenários, mas a modalidade depende dos fatos do caso.
+        Adicione as penas definitivas individuais depois da dosimetria trifásica de cada crime.
       </Info>
 
-      <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 space-y-3">
-        <h2 className="font-bold text-sm">1. Diagnóstico da modalidade</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Diagnóstico */}
+      <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6] space-y-4">
+        <h2 className="font-bold text-base text-[#212529]">1. Diagnóstico da modalidade</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Houve uma só ação ou omissão?</label>
-            <select value={config.umaConduta} onChange={e => setConfigField("umaConduta", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Houve uma só ação ou omissão?</label>
+            <select value={config.umaConduta} onChange={e => setConfigField("umaConduta", e.target.value)} className={inputCls + " cursor-pointer"}>
               <option value="">Não sei informar</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Havia desígnios autônomos?</label>
-            <select value={config.designiosAutonomos} onChange={e => setConfigField("designiosAutonomos", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Havia desígnios autônomos?</label>
+            <select value={config.designiosAutonomos} onChange={e => setConfigField("designiosAutonomos", e.target.value)} className={inputCls + " cursor-pointer"}>
               <option value="">Não sei informar</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Os crimes são da mesma espécie?</label>
-            <select value={config.mesmaEspecie} onChange={e => setConfigField("mesmaEspecie", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Os crimes são da mesma espécie?</label>
+            <select value={config.mesmaEspecie} onChange={e => setConfigField("mesmaEspecie", e.target.value)} className={inputCls + " cursor-pointer"}>
               <option value="">Não sei informar</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Tempo, lugar e modo indicam continuidade?</label>
-            <select value={config.mesmasCondicoes} onChange={e => setConfigField("mesmasCondicoes", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Tempo, lugar e modo indicam continuidade?</label>
+            <select value={config.mesmasCondicoes} onChange={e => setConfigField("mesmasCondicoes", e.target.value)} className={inputCls + " cursor-pointer"}>
               <option value="">Não sei informar</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -136,19 +135,21 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
           </div>
         </div>
         {sugestao && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+          <div className="bg-brand-50 border border-brand-200 rounded-[4px] p-3 text-sm text-brand-800">
             <strong>Sugestão didática:</strong> {sugestao.motivo}
-            <button type="button" onClick={() => setConfigField("modalidade", sugestao.modalidade)} className="ml-2 underline font-semibold">Aplicar</button>
+            <button type="button" onClick={() => setConfigField("modalidade", sugestao.modalidade)}
+              className="ml-2 underline font-semibold text-brand-600 hover:text-brand-700">Aplicar</button>
           </div>
         )}
       </div>
 
-      <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 space-y-3">
-        <h2 className="font-bold text-sm">2. Regra aplicável ao caso</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Regra aplicável */}
+      <div className="bg-white rounded-[4px] p-4 border border-[#dee2e6] space-y-4">
+        <h2 className="font-bold text-base text-[#212529]">2. Regra aplicável ao caso</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Modalidade</label>
-            <select value={config.modalidade} onChange={e => setConfigField("modalidade", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Modalidade</label>
+            <select value={config.modalidade} onChange={e => setConfigField("modalidade", e.target.value)} className={inputCls + " cursor-pointer"}>
               <option value="material">Concurso material (art. 69)</option>
               <option value="formal-proprio">Concurso formal próprio (art. 70)</option>
               <option value="formal-improprio">Concurso formal impróprio (art. 70)</option>
@@ -156,31 +157,29 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Aumento no formal próprio</label>
-            <select value={config.aumentoFormal} onChange={e => setConfigField("aumentoFormal", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Aumento no formal próprio</label>
+            <select value={config.aumentoFormal} onChange={e => setConfigField("aumentoFormal", e.target.value)} className={inputCls + " cursor-pointer"}>
               {FRACOES_FORMAL.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Aumento no crime continuado</label>
-            <select value={config.aumentoContinuado} onChange={e => setConfigField("aumentoContinuado", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white">
+            <label className={labelCls}>Aumento no crime continuado</label>
+            <select value={config.aumentoContinuado} onChange={e => setConfigField("aumentoContinuado", e.target.value)} className={inputCls + " cursor-pointer"}>
               {FRACOES_CONTINUADO.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
         </div>
       </div>
 
+      {/* Penas individuais */}
       <div className="space-y-3">
-        <h2 className="font-bold text-sm">3. Penas individuais já dosimetradas</h2>
+        <h2 className="font-bold text-base text-[#212529]">3. Penas individuais já dosimetradas</h2>
         {crimes.map((c) => (
-          <div key={c.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="mb-2">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Selecionar crime (auto-preenchimento)</label>
-              <select
-                value={c.nome}
-                onChange={e => handleCrimeSelect(c.id, e.target.value)}
-                className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none"
-              >
+          <div key={c.id} className="bg-white rounded-[4px] p-4 border border-[#dee2e6]">
+            <div className="mb-4">
+              <label className={labelCls}>Selecionar crime (auto-preenchimento)</label>
+              <select value={c.nome} onChange={e => handleCrimeSelect(c.id, e.target.value)}
+                className={inputCls + " cursor-pointer"}>
                 <option value="">-- Selecione um crime --</option>
                 {crimesList.map((crime, i) => (
                   <option key={i} value={crime.nome}>{crime.nome}</option>
@@ -188,127 +187,100 @@ export default function ConcursoSection({ crimesList, crimes, setCrimes, config,
                 <option value="__outro__">Outro (digite manualmente)</option>
               </select>
               {c.observacao.trim() && (
-                <div className="mt-2">
-                  <Info color="yellow" title="Observação do crime selecionado">
-                    {c.observacao}
-                  </Info>
+                <div className="mt-3">
+                  <Info color="yellow" title="Observação do crime selecionado">{c.observacao}</Info>
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Crime / descrição manual</label>
-                <input
-                  value={c.nome === "__outro__" ? "" : c.nome}
+                <label className={labelCls}>Crime / descrição manual</label>
+                <input value={c.nome === "__outro__" ? "" : c.nome}
                   onChange={e => updateCrime(c.id, "nome", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                  placeholder="Ex: Roubo art. 157"
-                />
+                  className={inputCls} placeholder="Ex: Roubo art. 157" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Tipo</label>
-                <select
-                  value={c.tipo}
-                  onChange={e => updateCrime(c.id, "tipo", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none"
-                >
+                <label className={labelCls}>Tipo</label>
+                <select value={c.tipo} onChange={e => updateCrime(c.id, "tipo", e.target.value)}
+                  className={inputCls + " cursor-pointer"}>
                   <option value="reclusão">Reclusão</option>
                   <option value="detenção">Detenção</option>
                   <option value="prisão simples">Prisão simples</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Pena mínima (anos)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={c.penaMin}
+                <label className={labelCls}>Pena mínima (anos)</label>
+                <input type="number" min="0" step="0.5" value={c.penaMin}
                   onChange={e => updateCrime(c.id, "penaMin", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                  placeholder="0"
-                />
+                  className={inputCls} placeholder="0" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Pena máxima (anos)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={c.penaMax}
+                <label className={labelCls}>Pena máxima (anos)</label>
+                <input type="number" min="0" step="0.5" value={c.penaMax}
                   onChange={e => updateCrime(c.id, "penaMax", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                  placeholder="0"
-                />
+                  className={inputCls} placeholder="0" />
               </div>
             </div>
-            <div className="mb-2">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Pena definitiva individual (anos) — obrigatória</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={c.penaDef}
+            <div className="mb-3">
+              <label className={labelCls}>Pena definitiva individual (anos) — obrigatória</label>
+              <input type="number" min="0" step="0.01" value={c.penaDef}
                 onChange={e => updateCrime(c.id, "penaDef", e.target.value)}
-                className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none"
-                placeholder="Informe a pena já calculada na dosimetria"
-              />
+                className={inputCls} placeholder="Informe a pena já calculada na dosimetria" />
               {!parseFloat(c.penaDef || "0") && (
-                <p className="mt-1 text-[11px] text-red-600">Sem pena definitiva este crime não entra no cálculo do concurso.</p>
+                <p className="mt-1 text-xs text-red-600">Sem pena definitiva este crime não entra no cálculo do concurso.</p>
               )}
             </div>
-            <button onClick={() => removeCrime(c.id)} className="text-xs text-red-500 hover:underline">
-              Remover crime
-            </button>
+            <button onClick={() => removeCrime(c.id)}
+              className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Remover crime</button>
           </div>
         ))}
       </div>
 
-      <button onClick={addCrime} className="text-xs text-blue-500 hover:underline">
-        + Adicionar crime ao concurso
-      </button>
+      <button onClick={addCrime}
+        className="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors">+ Adicionar crime ao concurso</button>
 
       {resultado && (
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-blue-100 text-xs space-y-2">
-          <div className="border-b border-blue-100 pb-2 mb-2">
-            <h3 className="font-bold text-gray-900">Resultado do Concurso</h3>
-            <p className="text-gray-500">Comparação didática entre os principais critérios de unificação.</p>
+        <div className="bg-white rounded-[4px] p-4 border border-brand-100 space-y-3">
+          <div className="border-b border-brand-100 pb-3">
+            <h3 className="font-bold text-[#212529] text-base">Resultado do Concurso</h3>
+            <p className="text-sm text-[#868e96]">Comparação didática entre os principais critérios de unificação.</p>
           </div>
-          <div className="grid grid-cols-1 gap-2">
-            <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
-              <p className="text-blue-700 font-medium">Concurso material (Art. 69 CP)</p>
-              <p className="text-gray-900 font-bold">{fmt(resultado.material)}</p>
-              <p className="text-gray-600">Soma das penas unificada ao limite de 40 anos (Art. 75, CP)</p>
+          <div className="space-y-2">
+            <div className="bg-brand-50 rounded-[4px] p-3 border border-brand-200">
+              <p className="text-sm text-brand-700 font-medium">Concurso material (Art. 69 CP)</p>
+              <p className="text-[#212529] font-bold text-base">{fmt(resultado.material)}</p>
+              <p className="text-xs text-[#868e96]">Soma das penas unificada ao limite de 40 anos (Art. 75, CP)</p>
             </div>
-            <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
-              <p className="text-blue-700 font-medium">Concurso formal (Art. 70 CP)</p>
-              <p className="text-gray-900 font-bold">{fmt(resultado.formal)}</p>
-              <p className="text-gray-600">Pena mais grave com aumento selecionado, limitada pela soma quando mais benéfico.</p>
+            <div className="bg-brand-50 rounded-[4px] p-3 border border-brand-200">
+              <p className="text-sm text-brand-700 font-medium">Concurso formal (Art. 70 CP)</p>
+              <p className="text-[#212529] font-bold text-base">{fmt(resultado.formal)}</p>
+              <p className="text-xs text-[#868e96]">Pena mais grave com aumento selecionado.</p>
             </div>
-            <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
-              <p className="text-blue-700 font-medium">Crime continuado (Art. 71 CP)</p>
-              <p className="text-gray-900 font-bold">{fmt(resultado.continuado)}</p>
-              <p className="text-gray-600">Pena mais grave com aumento de 1/6 a 2/3.</p>
+            <div className="bg-brand-50 rounded-[4px] p-3 border border-brand-200">
+              <p className="text-sm text-brand-700 font-medium">Crime continuado (Art. 71 CP)</p>
+              <p className="text-[#212529] font-bold text-base">{fmt(resultado.continuado)}</p>
+              <p className="text-xs text-[#868e96]">Pena mais grave com aumento de 1/6 a 2/3.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-              <p className="text-gray-700 font-medium">Resultado pela modalidade selecionada</p>
-              <p className="text-gray-900 font-bold">{fmt(resultado.resultadoEscolhido)}</p>
-              <p className="text-gray-600">{resultado.fundamentoEscolhido}</p>
+            <div className="bg-[#f8f9fa] rounded-[4px] p-3 border border-[#dee2e6]">
+              <p className="text-sm text-[#495057] font-medium">Resultado pela modalidade selecionada</p>
+              <p className="text-[#212529] font-bold text-base">{fmt(resultado.resultadoEscolhido)}</p>
+              <p className="text-xs text-[#868e96]">{resultado.fundamentoEscolhido}</p>
             </div>
           </div>
           {resultado.penasIncompletas > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded p-2 text-red-700">
+            <div className="bg-red-50 border border-red-200 rounded-[4px] p-3 text-sm text-red-700">
               {resultado.penasIncompletas} crime(s) sem pena definitiva foram ignorados no cálculo.
             </div>
           )}
-          <div className="bg-gray-50 border border-gray-200 rounded p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-bold text-gray-800">Relatório do concurso</h4>
-              <button type="button" onClick={handleCopy} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">
+          <div className="bg-[#f8f9fa] border border-[#dee2e6] rounded-[4px] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-[#212529]">Relatório do concurso</h4>
+              <button type="button" onClick={handleCopy}
+                className="inline-flex items-center h-[36px] px-4 text-sm font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-[4px] transition-colors">
                 {copied ? "Copiado!" : "Copiar"}
               </button>
             </div>
-            <pre className="whitespace-pre-wrap text-[11px] text-gray-700 font-mono leading-relaxed">{relatorio}</pre>
+            <pre className="whitespace-pre-wrap text-[13px] text-[#212529] font-mono leading-relaxed bg-white rounded-[4px] p-3 border border-[#dee2e6]">{relatorio}</pre>
           </div>
         </div>
       )}
