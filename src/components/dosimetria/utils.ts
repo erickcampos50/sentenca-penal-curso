@@ -3,6 +3,19 @@ import type { Crime, Color, RowItem, ConcursoCrime, ConcursoConfig, ConcursoModa
 
 export const FV: Record<string, number> = { "1/8":1/8,"1/6":1/6,"1/5":1/5,"1/4":1/4,"1/3":1/3,"1/2":1/2,"2/3":2/3 };
 
+export function fmtAnosCompact(anos: number): string {
+  if (!anos || anos <= 0) return "";
+  const totalD = Math.round(anos * 360);
+  const a = Math.floor(totalD / 360);
+  const m = Math.floor((totalD % 360) / 30);
+  const d = totalD % 30;
+  const p: string[] = [];
+  if (a > 0) p.push(`${a} ${a !== 1 ? "anos" : "ano"}`);
+  if (m > 0) p.push(`${m} ${m !== 1 ? "meses" : "mês"}`);
+  if (d > 0) p.push(`${d} ${d !== 1 ? "dias" : "dia"}`);
+  return p.join(" e ");
+}
+
 export function prescPrazo(anos: number): number {
   if (anos > 12) return 20;
   if (anos > 8) return 16;
